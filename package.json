@@ -1,0 +1,30 @@
+{
+  "name": "@2003scape/rsc-world-map",
+  "version": "1.0.0",
+  "description": "interactive world map for runescape classic",
+  "main": "./src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/2003scape/rsc-world-map.git"
+  },
+  "keywords": [
+    "runescape",
+    "classic",
+    "rsc",
+    "world",
+    "map",
+    "landscape"
+  ],
+  "author": "2003Scape Team",
+  "license": "AGPL-3.0+",
+  "bugs": {
+    "url": "https://github.com/2003scape/rsc-world-map/issues"
+  },
+  "homepage": "https://github.com/2003scape/rsc-world-map#readme",
+  "dependencies": {
+    "brfs": "^2.0.2"
+  }
+}
