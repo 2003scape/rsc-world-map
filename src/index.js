@@ -1,4 +1,5 @@
 const fs = require('fs');
+const defaultLabels = require('../res/labels');
 
 const PLANE_IMAGES = [
     fs.readFileSync('./res/plane-0.png'),
@@ -7,9 +8,21 @@ const PLANE_IMAGES = [
     fs.readFileSync('./res/plane-3.png')
 ];
 
+const IMAGE_WIDTH = 2448;
+const IMAGE_HEIGHT = 2736;
+
+const MIN_REGION_X = 48;
+const MIN_REGION_Y = 37;
+
+const SECTOR_WIDTH = 48;
+const SECTOR_HEIGHT = 48;
+
+const TILE_SIZE = 3;
+
 class WorldMap {
-    constructor(container) {
+    constructor({ container, labels }) {
         this.container = container;
+        this.labels = labels || defaultLabels;
 
         this.mouseDown = false;
 
@@ -100,6 +113,18 @@ class WorldMap {
     }
 
     scrollMap() {
+        if (this.mapRelativeX > 0) {
+            this.mapRelativeX = 0;
+        } else if (this.mapRelativeX < -IMAGE_WIDTH) {
+            this.mapRelativeX = -IMAGE_WIDTH;
+        }
+
+        if (this.mapRelativeY > 0) {
+            this.mapRelativeY = 0;
+        } else if (this.mapRelativeY < -IMAGE_HEIGHT) {
+            this.mapRelativeY = -IMAGE_HEIGHT;
+        }
+
         const x = `${Math.floor(this.mapRelativeX)}px`;
         const y = `${Math.floor(this.mapRelativeY)}px`;
 
@@ -136,6 +161,7 @@ class WorldMap {
             this.startMapY = this.mapRelativeY;
 
             const { x, y } = this.getMousePosition(event);
+
             this.startMouseX = x;
             this.startMouseY = y;
 
@@ -153,13 +179,10 @@ class WorldMap {
                 const { deltaX, deltaY } = this.getScrollDelta(distance);
                 //console.log(time, distance, deltaX, deltaY);
 
-                if (time < 400 && distance > 30) {
-                    const delay = Math.floor(300 + (time ));
+                if (time < 400 && distance > 75) {
+                    const delay = 300 + time * 2;
 
-                    console.log('delay', delay);
-
-                    this.planeWrap.style.transition =
-                        `transform 0.${delay}s cubic-bezier(0.61, 1, 0.88, 1)`;
+                    this.planeWrap.style.transition = `transform 0.${delay}s cubic-bezier(0.61, 1, 0.88, 1)`;
                     this.mapAnimateUntil = Date.now() + delay;
                     this.mapRelativeX -= deltaX * distance;
                     this.mapRelativeY -= deltaY * distance;
@@ -188,10 +211,39 @@ class WorldMap {
         window.addEventListener('touchmove', mouseMove, false);
     }
 
+    addLabels() {
+        for (const label of this.labels) {
+            let [x, y] = [label.x, label.y];
+
+            x -= MIN_REGION_X * SECTOR_WIDTH * TILE_SIZE;
+            y -= MIN_REGION_Y * SECTOR_HEIGHT * TILE_SIZE;
+
+            const labelEl = document.createElement('span');
+
+            labelEl.style.position = 'absolute';
+            labelEl.style.userSelect = 'none';
+            labelEl.style.color = label.colour || '#fff';
+            labelEl.style.textShadow = '1px 1px #000';
+            labelEl.style.fontFamily = 'arial, sans-serif';
+            labelEl.style.textAlign = label.align || 'left';
+            labelEl.style.fontSize = `${label.size + 2}px`;
+            labelEl.style.fontWeight = label.bold ? 'bold' : 'normal';
+            labelEl.style.top = `${y}px`;
+            labelEl.style.left = `${x}px`;
+            labelEl.innerText = label.text;
+
+            this.planeWrap.appendChild(labelEl);
+        }
+    }
+
     async init() {
         await this.loadImages();
+
         this.planeWrap.appendChild(this.planeImages[0]);
+        this.addLabels();
+
         this.container.appendChild(this.planeWrap);
+
         this.attachHandlers();
         this.scrollMap();
     }
