@@ -11,4 +11,5 @@ worldMap.init().then(() => {
     console.log('hi');
 });
 
+document.body.style.background = '#000';
 document.body.appendChild(container);
