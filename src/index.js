@@ -14,8 +14,8 @@ class WorldMap {
         this.mouseDown = false;
 
         // the top and left px of the planewrap element
-        this.mapRelativeX = 0;
-        this.mapRelativeY = 0;
+        this.mapRelativeX = -1932;
+        this.mapRelativeY = -1816;
 
         // timestamp of when we first clicked
         this.startTime = 0;
@@ -29,11 +29,17 @@ class WorldMap {
         this.startMouseX = -1;
         this.startMouseY = -1;
 
+        // is the map moving?
+        this.mapMoving = false;
+
+        // when the map transition ends
+        this.mapAnimateUntil = 0;
+
         this.container.style.backgroundColor = '#24407f';
         this.container.style.position = 'relative';
         this.container.style.overflow = 'hidden';
         this.container.style.userSelect = 'none';
-        this.container.style.cursor = 'move';
+        this.container.style.cursor = 'grab';
 
         this.planeWrap = document.createElement('div');
         this.planeWrap.style.position = 'absolute';
@@ -51,6 +57,7 @@ class WorldMap {
 
                 imageEl.onload = () => {
                     loaded += 1;
+
                     if (loaded === PLANE_IMAGES.length) {
                         resolve();
                     }
@@ -78,12 +85,33 @@ class WorldMap {
         };
     }
 
+    getScrollDistance() {
+        return Math.sqrt(
+            Math.pow(this.startMapX - this.mapRelativeX, 2) +
+                Math.pow(this.startMapY - this.mapRelativeY, 2)
+        );
+    }
+
+    getScrollDelta(distance) {
+        const deltaX = (this.startMapX - this.mapRelativeX) / distance;
+        const deltaY = (this.startMapY - this.mapRelativeY) / distance;
+
+        return { deltaX, deltaY };
+    }
+
     scrollMap() {
+        const x = `${Math.floor(this.mapRelativeX)}px`;
+        const y = `${Math.floor(this.mapRelativeY)}px`;
+
+        this.planeWrap.style.transform = `translate(${x}, ${y})`;
+
+        if (this.mapAnimateUntil < Date.now()) {
+            this.planeWrap.style.transition = '';
+        }
+
         if (!this.mouseDown) {
             return;
         }
-
-        this.planeWrap.style.transform = `translate(${this.mapRelativeX}px, ${this.mapRelativeY}px)`;
 
         window.requestAnimationFrame(this._scrollMap);
     }
@@ -94,8 +122,14 @@ class WorldMap {
                 return;
             }
 
+            if (this.mapAnimateUntil) {
+                this.mapAnimateUntil = 0;
+                this.planeWrap.style.transition = '';
+            }
+
+            this.mapMoving = true;
             this.mouseDown = true;
-            this.container.style.cursor = 'grab';
+            this.container.style.cursor = 'grabbing';
 
             this.startTime = Date.now();
             this.startMapX = this.mapRelativeX;
@@ -112,9 +146,28 @@ class WorldMap {
         this.container.addEventListener('touchstart', mouseDown, false);
 
         const mouseUp = () => {
-            console.log(Date.now() - this.startTime);
+            const time = Date.now() - this.startTime;
+            const distance = this.getScrollDistance();
+
+            if (distance) {
+                const { deltaX, deltaY } = this.getScrollDelta(distance);
+                //console.log(time, distance, deltaX, deltaY);
+
+                if (time < 400 && distance > 30) {
+                    const delay = Math.floor(300 + (time ));
+
+                    console.log('delay', delay);
+
+                    this.planeWrap.style.transition =
+                        `transform 0.${delay}s cubic-bezier(0.61, 1, 0.88, 1)`;
+                    this.mapAnimateUntil = Date.now() + delay;
+                    this.mapRelativeX -= deltaX * distance;
+                    this.mapRelativeY -= deltaY * distance;
+                }
+            }
+
             this.mouseDown = false;
-            this.container.style.cursor = 'move';
+            this.container.style.cursor = 'grab';
         };
 
         window.addEventListener('mouseup', mouseUp, false);
@@ -126,6 +179,7 @@ class WorldMap {
             }
 
             const { x, y } = this.getMousePosition(event);
+
             this.mapRelativeX = this.startMapX - (this.startMouseX - x);
             this.mapRelativeY = this.startMapY - (this.startMouseY - y);
         };
@@ -139,6 +193,7 @@ class WorldMap {
         this.planeWrap.appendChild(this.planeImages[0]);
         this.container.appendChild(this.planeWrap);
         this.attachHandlers();
+        this.scrollMap();
     }
 }
 
