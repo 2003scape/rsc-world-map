@@ -38,6 +38,23 @@ const LABEL_STYLES = {
     textShadow: '1px 1px #000'
 };
 
+const OBJECT_CANVAS_STYLES = {
+    position: 'absolute',
+    pointerEvents: 'none',
+    userSelect: 'none',
+    top: 0,
+    left: 0,
+    imageRendering: '-moz-crisp-edges'
+};
+
+const LABEL_WRAP_STYLES = {
+    position : 'absolute',
+    top : 0,
+    left : 0,
+    width : '100%',
+    height : '100%'
+};
+
 // the orange + symbol colour used to indicate game objects
 const OBJECT_COLOUR = 'rgb(175, 95, 0)';
 
@@ -267,6 +284,9 @@ class WorldMap {
     }
 
     addLabels() {
+        this.labelWrap = document.createElement('div');
+        Object.assign(this.labelWrap.style, LABEL_WRAP_STYLES);
+
         for (const label of this.labels) {
             let [x, y] = [label.x, label.y];
 
@@ -288,8 +308,10 @@ class WorldMap {
 
             Object.assign(labelEl.style, Object.assign(styles, LABEL_STYLES));
 
-            this.planeWrap.appendChild(labelEl);
+            this.labelWrap.appendChild(labelEl);
         }
+
+        this.planeWrap.appendChild(this.labelWrap);
     }
 
     addPoints() {
@@ -302,19 +324,13 @@ class WorldMap {
     }
 
     addObjects() {
-        const canvas = document.createElement('canvas');
+        this.objectCanvas = document.createElement('canvas');
+        Object.assign(this.objectCanvas.style, OBJECT_CANVAS_STYLES);
 
-        canvas.style.position = 'absolute';
-        canvas.style.pointerEvents = 'none';
-        canvas.style.userSelect = 'none';
-        canvas.style.top = 0;
-        canvas.style.left = 0;
-        canvas.style.imageRendering = '-moz-crisp-edges';
+        this.objectCanvas.width = IMAGE_WIDTH;
+        this.objectCanvas.height = IMAGE_HEIGHT;
 
-        canvas.width = IMAGE_WIDTH;
-        canvas.height = IMAGE_HEIGHT;
-
-        const ctx = canvas.getContext('2d');
+        const ctx = this.objectCanvas.getContext('2d');
 
         for (let { id, x, y } of this.objects) {
             x *= TILE_SIZE;
@@ -335,20 +351,23 @@ class WorldMap {
             ctx.drawImage(image, x, y);
         }
 
-        this.planeWrap.appendChild(canvas);
+        this.planeWrap.appendChild(this.objectCanvas);
     }
 
     async init() {
         await this.loadImages();
 
         this.pointElements = new PointElements();
+
         await this.pointElements.init();
 
         this.planeWrap.innerHTML = '';
-        this.planeWrap.appendChild(this.planeImages[0]);
+
         this.addObjects();
         this.addPoints();
         this.addLabels();
+
+        this.planeWrap.appendChild(this.planeImages[0]);
 
         this.container.appendChild(this.planeWrap);
 
