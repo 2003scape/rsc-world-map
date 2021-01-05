@@ -1,5 +1,6 @@
 const PointElements = require('./point-elements');
 const KeyElements = require('./key-elements');
+const ZoomElements = require('./zoom-elements');
 const defaultLabels = require('../res/labels');
 const defaultObjects = require('../res/objects');
 const defaultPoints = require('../res/points');
@@ -47,14 +48,6 @@ const OBJECT_CANVAS_STYLES = {
     imageRendering: '-moz-crisp-edges'
 };
 
-const LABEL_WRAP_STYLES = {
-    position : 'absolute',
-    top : 0,
-    left : 0,
-    width : '100%',
-    height : '100%'
-};
-
 // the orange + symbol colour used to indicate game objects
 const OBJECT_COLOUR = 'rgb(175, 95, 0)';
 
@@ -100,7 +93,6 @@ class WorldMap {
         this.objects = objects || defaultObjects;
 
         this.mouseDown = false;
-        this.dragStartTime = 0;
 
         // the top and left px of the planewrap element
         this.mapRelativeX = -1932;
@@ -114,6 +106,13 @@ class WorldMap {
         // clicked
         this.startMouseX = -1;
         this.startMouseY = -1;
+
+        // the position of the map at a sampled rate for the drag effect
+        this.dragMapX = -1;
+        this.dragMapY = -1;
+
+        // taken every X ms to determine how far to fling the map
+        this.lastSample = 0;
 
         Object.assign(this.container.style, CONTAINER_STYLES);
 
@@ -163,10 +162,10 @@ class WorldMap {
         };
     }
 
-    getScrollDistance() {
+    getDragDistance() {
         return Math.sqrt(
-            Math.pow(this.startMapX - this.mapRelativeX, 2) +
-                Math.pow(this.startMapY - this.mapRelativeY, 2)
+            Math.pow(this.dragMapX - this.mapRelativeX, 2) +
+                Math.pow(this.dragMapY - this.mapRelativeY, 2)
         );
     }
 
@@ -195,6 +194,12 @@ class WorldMap {
 
         this.planeWrap.style.transform = `translate(${x}, ${y})`;
 
+        if (Date.now() - this.lastSample >= 100) {
+            this.dragMapX = this.mapRelativeX;
+            this.dragMapY = this.mapRelativeY;
+            this.lastSample = Date.now();
+        }
+
         if (!this.mouseDown) {
             return;
         }
@@ -212,13 +217,13 @@ class WorldMap {
                 clearTimeout(this.transitionTimeout);
             }
 
+            this.container.style.cursor = 'grabbing';
             this.planeWrap.style.transition = '';
 
             this.mouseDown = true;
-            this.container.style.cursor = 'grabbing';
-
             this.startMapX = this.mapRelativeX;
             this.startMapY = this.mapRelativeY;
+            this.lastSample = Date.now();
 
             const { x, y } = this.getMousePosition(event);
 
@@ -236,26 +241,25 @@ class WorldMap {
                 return;
             }
 
-            const time = Date.now() - this.dragStartTime;
-            const distance = this.getScrollDistance();
+            if (this.sampleInterval) {
+                clearInterval(this.sampleInterval);
+            }
 
-            if (time < 500 && distance) {
+            const distance = this.getDragDistance();
+
+            if (distance) {
                 const { deltaX, deltaY } = this.getScrollDelta(distance);
+                const delay = Math.floor(200 + distance * 1.25);
 
-                if (distance > 80) {
-                    const delay = Math.floor(300 + distance / 4);
+                this.planeWrap.style.transition =
+                    `transform 0.${delay}s ` + 'cubic-bezier(0.61, 1, 0.88, 1)';
 
-                    this.planeWrap.style.transition =
-                        `transform 0.${delay}s ` +
-                        'cubic-bezier(0.61, 1, 0.88, 1)';
+                this.transitionTimeout = setTimeout(() => {
+                    this.planeWrap.style.transition = '';
+                }, delay);
 
-                    this.transitionTimeout = setTimeout(() => {
-                        this.planeWrap.style.transition = '';
-                    }, delay);
-
-                    this.mapRelativeX -= deltaX * (distance / 2);
-                    this.mapRelativeY -= deltaY * (distance / 2);
-                }
+                this.mapRelativeX -= deltaX * (distance / 2);
+                this.mapRelativeY -= deltaY * (distance / 2);
             }
 
             this.mouseDown = false;
@@ -275,8 +279,6 @@ class WorldMap {
 
             this.mapRelativeX = this.startMapX - (this.startMouseX - x);
             this.mapRelativeY = this.startMapY - (this.startMouseY - y);
-
-            this.dragStartTime = Date.now();
         };
 
         window.addEventListener('mousemove', mouseMove, false);
@@ -284,9 +286,6 @@ class WorldMap {
     }
 
     addLabels() {
-        this.labelWrap = document.createElement('div');
-        Object.assign(this.labelWrap.style, LABEL_WRAP_STYLES);
-
         for (const label of this.labels) {
             let [x, y] = [label.x, label.y];
 
@@ -308,10 +307,8 @@ class WorldMap {
 
             Object.assign(labelEl.style, Object.assign(styles, LABEL_STYLES));
 
-            this.labelWrap.appendChild(labelEl);
+            this.planeWrap.appendChild(labelEl);
         }
-
-        this.planeWrap.appendChild(this.labelWrap);
     }
 
     addPoints() {
@@ -358,21 +355,21 @@ class WorldMap {
         await this.loadImages();
 
         this.pointElements = new PointElements();
-
         await this.pointElements.init();
 
         this.planeWrap.innerHTML = '';
-
+        this.planeWrap.appendChild(this.planeImages[0]);
         this.addObjects();
         this.addPoints();
         this.addLabels();
-
-        this.planeWrap.appendChild(this.planeImages[0]);
 
         this.container.appendChild(this.planeWrap);
 
         this.keyElements = new KeyElements(this);
         this.keyElements.init();
+
+        this.zoomElements = new ZoomElements(this);
+        this.zoomElements.init();
 
         this.attachHandlers();
         this.scrollMap();

@@ -1,27 +1,5 @@
 const PointElements = require('./point-elements');
-const fs = require('fs');
-
-const STONE_IMAGE = fs.readFileSync('./res/stone-background.png');
-
-const BUTTON_STYLES = {
-    opacity: 0.6,
-    boxSizing: 'border-box',
-    outline: '2px solid #000',
-    border: '3px outset #373737',
-    fontSize: '12px',
-    width: '43px',
-    height: '36px',
-    cursor: 'pointer',
-    color: '#fff',
-    position: 'absolute',
-    top: '16px',
-    right: '16px',
-    margin: 0,
-    padding: 0,
-    backgroundImage: `url(data:image/png;base64,${STONE_IMAGE.toString(
-        'base64'
-    )})`
-};
+const { getButton } = require('./button-element');
 
 const BOX_STYLES = {
     backgroundColor: '#000',
@@ -36,7 +14,8 @@ const BOX_STYLES = {
     display: 'none',
     overflowY: 'scroll',
     padding: '4px',
-    fontSize: '13px'
+    fontSize: '13px',
+    zIndex: 1
 };
 
 const LIST_STYLES = { padding: 0, margin: 0 };
@@ -65,7 +44,6 @@ class KeyElements {
     constructor(worldMap) {
         this.container = worldMap.container;
         this.planeWrap = worldMap.planeWrap;
-        this.labelWrap = worldMap.labelWrap;
         this.objectCanvas = worldMap.objectCanvas;
 
         this.open = false;
@@ -78,48 +56,44 @@ class KeyElements {
 
         // the "Key" button in the top right corner, used to toggle the
         // following box
-        const button = document.createElement('button');
-        Object.assign(button.style, BUTTON_STYLES);
-
-        button.innerText = 'Key';
-        button.title = 'Toggle points of interest.';
+        const button = getButton('Key', 'Toggle key points of interest.');
+        button.style.width = '43px';
+        button.style.top = '16px';
+        button.style.right = '16px';
 
         // bordered black box wrapping the options and toggles
         const box = document.createElement('div');
         Object.assign(box.style, BOX_STYLES);
 
         // toggle the text labels
-        box.appendChild(this.getHeader('Labels'));
+        box.appendChild(this.getHeader('Display'));
 
         const labelsLabel = this.getLabel('toggle-labels');
-        this.toggleLabels = document.createElement('input');
+        const toggleLabels = document.createElement('input');
 
-        this.toggleLabels.addEventListener(
+        toggleLabels.addEventListener(
             'click',
             () => {
                 this.showLabels = !this.showLabels;
-
-                this.labelWrap.style.display = this.showLabels
-                    ? 'block'
-                    : 'none';
+                this.refreshLabels();
             },
             false
         );
 
-        this.toggleLabels.style.cursor = 'pointer';
-        this.toggleLabels.id = 'toggle-labels';
-        this.toggleLabels.type = 'checkbox';
-        this.toggleLabels.checked = true;
+        toggleLabels.style.cursor = 'pointer';
+        toggleLabels.id = 'toggle-labels';
+        toggleLabels.type = 'checkbox';
+        toggleLabels.checked = true;
 
-        labelsLabel.appendChild(this.toggleLabels);
+        labelsLabel.appendChild(toggleLabels);
         labelsLabel.appendChild(document.createTextNode('\xa0Text'));
 
         box.appendChild(labelsLabel);
 
         const objectsLabel = this.getLabel('toggle-objects');
-        this.toggleObjects = document.createElement('input');
+        const toggleObjects = document.createElement('input');
 
-        this.toggleObjects.addEventListener(
+        toggleObjects.addEventListener(
             'click',
             () => {
                 this.showObjects = !this.showObjects;
@@ -131,16 +105,15 @@ class KeyElements {
             false
         );
 
-        this.toggleObjects.style.cursor = 'pointer';
-        this.toggleObjects.id = 'toggle-objects';
-        this.toggleObjects.type = 'checkbox';
-        this.toggleObjects.checked = true;
+        toggleObjects.style.cursor = 'pointer';
+        toggleObjects.id = 'toggle-objects';
+        toggleObjects.type = 'checkbox';
+        toggleObjects.checked = true;
 
-        objectsLabel.appendChild(this.toggleObjects);
+        objectsLabel.appendChild(toggleObjects);
         objectsLabel.appendChild(document.createTextNode('\xa0Objects'));
 
         box.appendChild(objectsLabel);
-
         box.appendChild(this.getHeader('Points'));
 
         const keyList = document.createElement('ul');
@@ -148,31 +121,31 @@ class KeyElements {
 
         const listEl = document.createElement('li');
         const pointLabel = this.getLabel('toggle-all');
-        this.toggleAll = document.createElement('input');
+        const toggleAll = document.createElement('input');
 
-        this.toggleAll.addEventListener(
+        toggleAll.addEventListener(
             'click',
             () => {
                 for (const type of Object.keys(
                     worldMap.pointElements.elements
                 )) {
-                    const toggled = !!this.toggleAll.checked;
+                    const toggled = !!toggleAll.checked;
 
                     this.toggledPoints[type] = toggled;
                     document.getElementById(`toggle-${type}`).checked = toggled;
                 }
 
-                this.refresh();
+                this.refreshPoints();
             },
             false
         );
 
-        this.toggleAll.style.cursor = 'pointer';
-        this.toggleAll.id = 'toggle-all';
-        this.toggleAll.type = 'checkbox';
-        this.toggleAll.checked = true;
+        toggleAll.style.cursor = 'pointer';
+        toggleAll.id = 'toggle-all';
+        toggleAll.type = 'checkbox';
+        toggleAll.checked = true;
 
-        pointLabel.appendChild(this.toggleAll);
+        pointLabel.appendChild(toggleAll);
         pointLabel.appendChild(document.createTextNode('\xa0Select All'));
 
         listEl.appendChild(pointLabel);
@@ -190,7 +163,7 @@ class KeyElements {
                 'click',
                 () => {
                     this.toggledPoints[type] = !this.toggledPoints[type];
-                    this.refresh();
+                    this.refreshPoints();
                 },
                 false
             );
@@ -222,7 +195,7 @@ class KeyElements {
 
         box.appendChild(keyList);
 
-        this.elements = { box, button };
+        this.elements = { box, button, toggleAll };
     }
 
     getHeader(text) {
@@ -245,24 +218,6 @@ class KeyElements {
 
     attachHandlers() {
         this.elements.button.addEventListener(
-            'mouseover',
-            () => {
-                this.elements.button.style.opacity = 1;
-            },
-            false
-        );
-
-        this.elements.button.addEventListener(
-            'mouseleave',
-            () => {
-                if (!this.open) {
-                    this.elements.button.style.opacity = 0.6;
-                }
-            },
-            false
-        );
-
-        this.elements.button.addEventListener(
             'click',
             () => {
                 const { box, button } = this.elements;
@@ -278,7 +233,7 @@ class KeyElements {
         );
     }
 
-    refresh() {
+    refreshPoints() {
         let allToggled = true;
 
         for (const toggled of Object.values(this.toggledPoints)) {
@@ -298,7 +253,15 @@ class KeyElements {
             }
         }
 
-        this.toggleAll.checked = allToggled;
+        this.elements.toggleAll.checked = allToggled;
+    }
+
+    refreshLabels() {
+        for (const child of this.planeWrap.children) {
+            if (child.tagName === 'SPAN') {
+                child.style.display = this.showLabels ? 'block' : 'none';
+            }
+        }
     }
 
     init() {
