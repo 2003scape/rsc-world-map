@@ -1,6 +1,9 @@
-const fs = require('fs');
 const defaultLabels = require('../res/labels');
+const defaultObjects = require('../res/objects');
 const defaultPoints = require('../res/points');
+const fs = require('fs');
+
+// all of these are inlined for brfs:
 
 const PLANE_IMAGES = [
     fs.readFileSync('./res/plane-0.png'),
@@ -54,7 +57,7 @@ const KEY_IMAGES = {
     tannery: fs.readFileSync('./res/key/tannery.png')
 };
 
-const BUTTON_IMAGE = fs.readFileSync('./res/button.png');
+const STONE_IMAGE = fs.readFileSync('./res/stone-background.png');
 
 const IMAGE_WIDTH = 2448;
 const IMAGE_HEIGHT = 2736;
@@ -72,8 +75,11 @@ const CONTAINER_STYLES = {
     cursor: 'grab'
 };
 
-const KEY_STYLES = {
+const KEY_BUTTON_STYLES = {
     opacity: 0.6,
+    boxSizing: 'border-box',
+    outline: '2px solid #000',
+    border: '3px outset #373737',
     fontSize: '12px',
     width: '43px',
     height: '36px',
@@ -82,11 +88,9 @@ const KEY_STYLES = {
     position: 'absolute',
     top: '16px',
     right: '16px',
-    border: 0,
-    outline: 0,
     margin: 0,
     padding: 0,
-    backgroundImage: `url(data:image/png;base64,${BUTTON_IMAGE.toString(
+    backgroundImage: `url(data:image/png;base64,${STONE_IMAGE.toString(
         'base64'
     )})`
 };
@@ -98,10 +102,35 @@ const LABEL_STYLES = {
     fontFamily: 'arial, sans-serif'
 };
 
+// the orange + symbol colour used to indicate game objects
+const OBJECT_COLOUR = 'rgb(175, 95, 0)';
+
+// only regular/evergreen trees outside of the wild are this colour
+const TREE_COLOUR = 'rgb(0, 160, 0)';
+
+// objects like dead trees and fungus are darker than rocks/signs in the wild
+const WILD_TREE_COLOUR = 'rgb(112, 64, 0)';
+
+// objects in the wild intended to be WILD_TREE_COLOUR
+const WILD_SCENERY = new Set([4, 38, 70, 205]);
+
+const OBJECT_IMAGE = makeObjectImage(OBJECT_COLOUR);
+const TREE_IMAGE = makeObjectImage(TREE_COLOUR);
+const WILD_TREE_IMAGE = makeObjectImage(WILD_TREE_COLOUR);
+
+// used to colour objects/trees within the wilderness
+function inWilderness(x, y) {
+    return x >= 1440 && x <= 2304 && y >= 286 && y <= 1286;
+}
+
+// de-slug a point of interest key
 function formatPointTitle(type) {
-    return type.split('-').map((segment) => {
-        return segment[0].toUpperCase() + segment.slice(1);
-    }).join(' ');
+    return type
+        .split('-')
+        .map((segment) => {
+            return segment[0].toUpperCase() + segment.slice(1);
+        })
+        .join(' ');
 }
 
 function applyStyles(element, styles) {
@@ -110,11 +139,28 @@ function applyStyles(element, styles) {
     }
 }
 
+// create the + symbols for entities
+function makeObjectImage(colour) {
+    const canvas = document.createElement('canvas');
+
+    canvas.width = 3;
+    canvas.height = 3;
+
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = colour;
+    ctx.fillRect(1, 0, 1, 3);
+    ctx.fillRect(0, 1, 3, 1);
+
+    return canvas;
+}
+
 class WorldMap {
-    constructor({ container, labels, points }) {
+    constructor({ container, labels, points, objects }) {
         this.container = container;
         this.labels = labels || defaultLabels;
         this.points = points || defaultPoints;
+        this.objects = objects || defaultObjects;
 
         this.mouseDown = false;
 
@@ -146,7 +192,7 @@ class WorldMap {
         this.keyButton.innerText = 'Key';
         this.keyButton.title = 'Toggle points of interest.';
 
-        applyStyles(this.keyButton, KEY_STYLES);
+        applyStyles(this.keyButton, KEY_BUTTON_STYLES);
 
         this._scrollMap = this.scrollMap.bind(this);
     }
@@ -271,6 +317,10 @@ class WorldMap {
         this.container.addEventListener('touchstart', mouseDown, false);
 
         const mouseUp = () => {
+            if (this.mapAnimateUntil) {
+                return;
+            }
+
             const time = Date.now() - this.startTime;
             const distance = this.getScrollDistance();
 
@@ -279,7 +329,7 @@ class WorldMap {
                 //console.log(time, distance, deltaX, deltaY);
 
                 if (time < 400 && distance > 75) {
-                    const delay = 300 + time * 2;
+                    const delay = Math.floor(300 + distance / 2);
 
                     this.planeWrap.style.transition =
                         `transform 0.${delay}s ` +
@@ -292,8 +342,8 @@ class WorldMap {
                         this.mapAnimateUntil = 0;
                     }, delay);
 
-                    this.mapRelativeX -= deltaX * distance;
-                    this.mapRelativeY -= deltaY * distance;
+                    this.mapRelativeX -= deltaX * (distance * 1.5);
+                    this.mapRelativeY -= deltaY * (distance * 1.5);
                 }
             }
 
@@ -305,7 +355,7 @@ class WorldMap {
         window.addEventListener('touchend', mouseUp, false);
 
         const mouseMove = (event) => {
-            if (!this.mouseDown) {
+            if (!this.mouseDown || this.mapAnimateUntil) {
                 return;
             }
 
@@ -374,20 +424,71 @@ class WorldMap {
             x -= MIN_REGION_X * SECTOR_SIZE * TILE_SIZE;
             y -= MIN_REGION_Y * SECTOR_SIZE * TILE_SIZE;
 
+            const wrapEl = document.createElement('div');
+            wrapEl.style.backgroundColor = '#c0c0c0';
+            wrapEl.style.border = '1px solid #000';
+            wrapEl.style.borderRadius = '8px';
+            wrapEl.style.width = '15px';
+            wrapEl.style.height = '15px';
+            wrapEl.style.top = `${y}px`;
+            wrapEl.style.left = `${x}px`;
+            wrapEl.style.position = 'absolute';
+            wrapEl.style.display = 'flex';
+            wrapEl.style.alignItems = 'center';
+            wrapEl.style.justifyContent = 'center';
+
+            wrapEl.title = formatPointTitle(type);
+
             const imageEl = document.createElement('img');
 
             imageEl.src = `data:image/png;base64,${this.keyImages[
                 type
             ].toString('base64')}`;
 
-            imageEl.style.position = 'absolute';
-            imageEl.style.top = `${y}px`;
-            imageEl.style.left = `${x}px`;
+            imageEl.style.imageRendering = '-moz-crisp-edges';
+            imageEl.style.pointerEvents = 'none';
+            imageEl.style.userSelect = 'none';
 
-            imageEl.title = formatPointTitle(type);
+            wrapEl.appendChild(imageEl);
 
-            this.planeWrap.appendChild(imageEl);
+            this.planeWrap.appendChild(wrapEl);
         }
+    }
+
+    addObjects() {
+        const canvas = document.createElement('canvas');
+
+        canvas.style.position = 'absolute';
+        canvas.style.pointerEvents = 'none';
+        canvas.style.userSelect = 'none';
+        canvas.style.top = 0;
+        canvas.style.left = 0;
+        canvas.style.imageRendering = '-moz-crisp-edges';
+        canvas.width = IMAGE_WIDTH;
+        canvas.height = IMAGE_HEIGHT;
+
+        const ctx = canvas.getContext('2d');
+
+        for (let { id, x, y } of this.objects) {
+            x *= TILE_SIZE;
+            x = IMAGE_WIDTH - x - 2;
+            y *= TILE_SIZE;
+            y -= 1;
+
+            let image = OBJECT_IMAGE;
+
+            if (inWilderness(x, y)) {
+                if (WILD_SCENERY.has(id)) {
+                    image = WILD_TREE_IMAGE;
+                }
+            } else if (id === 1) {
+                image = TREE_IMAGE;
+            }
+
+            ctx.drawImage(image, x, y);
+        }
+
+        this.planeWrap.appendChild(canvas);
     }
 
     async init() {
@@ -395,6 +496,7 @@ class WorldMap {
 
         this.planeWrap.innerHTML = '';
         this.planeWrap.appendChild(this.planeImages[0]);
+        this.addObjects();
         this.addPoints();
         this.addLabels();
 
