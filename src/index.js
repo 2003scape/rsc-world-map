@@ -191,8 +191,6 @@ class WorldMap {
                 return;
             }
 
-            this.dragStartTime = Date.now();
-
             if (this.transitionTimeout) {
                 clearTimeout(this.transitionTimeout);
             }
@@ -228,7 +226,7 @@ class WorldMap {
                 const { deltaX, deltaY } = this.getScrollDelta(distance);
 
                 if (distance > 80) {
-                    const delay = Math.floor(300 + distance / 2);
+                    const delay = Math.floor(300 + distance / 4);
 
                     this.planeWrap.style.transition =
                         `transform 0.${delay}s ` +
@@ -238,8 +236,8 @@ class WorldMap {
                         this.planeWrap.style.transition = '';
                     }, delay);
 
-                    this.mapRelativeX -= deltaX * (distance * 0.75);
-                    this.mapRelativeY -= deltaY * (distance * 0.75);
+                    this.mapRelativeX -= deltaX * (distance / 2);
+                    this.mapRelativeY -= deltaY * (distance / 2);
                 }
             }
 
@@ -260,6 +258,8 @@ class WorldMap {
 
             this.mapRelativeX = this.startMapX - (this.startMouseX - x);
             this.mapRelativeY = this.startMapY - (this.startMouseY - y);
+
+            this.dragStartTime = Date.now();
         };
 
         window.addEventListener('mousemove', mouseMove, false);

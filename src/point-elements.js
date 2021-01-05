@@ -116,6 +116,8 @@ class PointElements {
     getPoint(type, x, y) {
         const el = this.elements[type].cloneNode(true);
 
+        el.dataset.pointType = type;
+
         if (typeof x == 'number') {
             el.style.position = 'absolute';
             el.style.top = `${y}px`;

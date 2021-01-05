@@ -47,11 +47,6 @@ const KEY_ITEM_STYLES = {
     marginBottom: '4px'
 };
 
-const KEY_LABEL_STYLES = {
-    cursor: 'pointer',
-    width: '100%'
-};
-
 const POINT_IMAGE_STYLES = {
     display: 'inline-flex',
     flexShrink: 0,
@@ -59,9 +54,12 @@ const POINT_IMAGE_STYLES = {
 };
 
 class KeyElements {
-    constructor({ container, pointElements }) {
+    constructor({ container, planeWrap, pointElements }) {
         this.container = container;
+        this.planeWrap = planeWrap;
+
         this.open = false;
+        this.toggled = {};
 
         const button = document.createElement('button');
         Object.assign(button.style, KEY_BUTTON_STYLES);
@@ -78,48 +76,73 @@ class KeyElements {
         const liEl = document.createElement('li');
         Object.assign(liEl.style, KEY_ITEM_STYLES);
 
-        const checkboxEl = document.createElement('input');
-        checkboxEl.style.cursor = 'pointer';
-        checkboxEl.id = 'toggle-all';
-        checkboxEl.type = 'checkbox';
-        liEl.appendChild(checkboxEl);
-
         const pointLabel = document.createElement('label');
-        Object.assign(pointLabel, KEY_LABEL_STYLES);
-
         pointLabel.htmlFor = 'toggle-all';
-        pointLabel.innerText = '\xa0Select All';
+
+        this.toggleAll = document.createElement('input');
+
+        this.toggleAll.addEventListener('click', () => {
+            for (const type of Object.keys(pointElements.elements)) {
+                const toggled = !!this.toggleAll.checked;
+                this.toggled[type] = toggled;
+                document.getElementById(`toggle-${type}`).checked = toggled;
+            }
+
+            this.refresh();
+        }, false);
+
+        this.toggleAll.style.cursor = 'pointer';
+        this.toggleAll.id = 'toggle-all';
+        this.toggleAll.type = 'checkbox';
+        this.toggleAll.checked = true;
+
+        pointLabel.appendChild(this.toggleAll);
+        pointLabel.appendChild(document.createTextNode('\xa0Select All'));
 
         liEl.appendChild(pointLabel);
         keyList.appendChild(liEl);
 
         for (const type of Object.keys(pointElements.elements)) {
+            this.toggled[type] = true;
+
             const id = `toggle-${type}`;
 
             const liEl = document.createElement('li');
             Object.assign(liEl.style, KEY_ITEM_STYLES);
 
-            const checkboxEl = document.createElement('input');
-            checkboxEl.style.cursor = 'pointer';
-            checkboxEl.id = id;
-            checkboxEl.type = 'checkbox';
-            liEl.appendChild(checkboxEl);
+            const pointLabel = document.createElement('label');
 
-            const wrapEl = document.createElement('div');
+            pointLabel.style.cursor = 'pointer';
+            pointLabel.htmlFor = id;
+
+            const checkboxEl = document.createElement('input');
+
+            checkboxEl.addEventListener('click', () => {
+                this.toggled[type] = !this.toggled[type];
+                this.refresh();
+            }, false);
+
+            checkboxEl.style.cursor = 'pointer';
+            checkboxEl.type = 'checkbox';
+            checkboxEl.id = id;
+            checkboxEl.checked = this.toggled[type];
+
+            pointLabel.appendChild(checkboxEl);
 
             const pointImage = pointElements.getPoint(type);
             Object.assign(pointImage.style, POINT_IMAGE_STYLES);
 
-            const pointLabel = document.createElement('label');
-            Object.assign(pointLabel.style, KEY_LABEL_STYLES);
-
             pointLabel.htmlFor = id;
-            pointLabel.innerText = ` ${PointElements.formatPointTitle(type)}`;
 
-            wrapEl.appendChild(pointImage);
-            wrapEl.appendChild(pointLabel);
-            liEl.appendChild(wrapEl);
+            pointLabel.appendChild(pointImage);
 
+            pointLabel.appendChild(
+                document.createTextNode(
+                    ` ${PointElements.formatPointTitle(type)}`
+                )
+            );
+
+            liEl.appendChild(pointLabel);
             keyList.appendChild(liEl);
         }
 
@@ -151,17 +174,38 @@ class KeyElements {
             'click',
             () => {
                 this.open = !this.open;
-                this.elements.box.style.display = this.open ? 'block' : 'none';
 
-                this.elements.button.style.opacity = this.open ? 1 : 0.6;
-                this.elements.button.style.fontWeight = this.open
-                    ? 'bold'
-                    : 'inherit';
+                const { box, button } = this.elements;
+
+                box.style.display = this.open ? 'block' : 'none';
+                button.style.opacity = this.open ? 1 : 0.6;
+                button.style.fontWeight = this.open ? 'bold' : 'inherit';
 
                 this.container.style.cursor = this.open ? 'inherit' : 'grab';
             },
             false
         );
+    }
+
+    refresh() {
+        let allToggled = true;
+
+        for (const toggled of Object.values(this.toggled)) {
+            if (!toggled) {
+                allToggled = false;
+                break;
+            }
+        }
+
+        for (const child of this.planeWrap.children) {
+            const type = child.dataset.pointType;
+
+            if (type) {
+                child.style.display = this.toggled[type] ? 'flex' : 'none';
+            }
+        }
+
+        this.toggleAll.checked = allToggled;
     }
 
     init() {
