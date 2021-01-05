@@ -1,11 +1,20 @@
 const { getButton } = require('./button-element');
 
 class ZoomElements {
-    constructor({ container }) {
-        this.container = container;
+    constructor(worldMap) {
+        this.worldMap = worldMap;
+        this.container = this.worldMap.container;
 
         const zoomIn = getButton('+', 'Zoom in.');
         const zoomOut = getButton('-', 'Zoom out.');
+
+        zoomIn.addEventListener('click', () => {
+            worldMap.zoom(1);
+        }, false);
+
+        zoomOut.addEventListener('click', () => {
+            worldMap.zoom(0);
+        }, false);
 
         zoomIn.style.width = '32px';
         zoomIn.style.bottom = '16px';

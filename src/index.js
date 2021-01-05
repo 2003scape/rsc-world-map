@@ -36,7 +36,8 @@ const CONTAINER_STYLES = {
 const LABEL_STYLES = {
     position: 'absolute',
     userSelect: 'none',
-    textShadow: '1px 1px #000'
+    textShadow: '1px 1px #000',
+    display: 'block'
 };
 
 const OBJECT_CANVAS_STYLES = {
@@ -63,6 +64,11 @@ const WILD_SCENERY = new Set([4, 38, 70, 205]);
 const OBJECT_IMAGE = makeObjectImage(OBJECT_COLOUR);
 const TREE_IMAGE = makeObjectImage(TREE_COLOUR);
 const WILD_TREE_IMAGE = makeObjectImage(WILD_TREE_COLOUR);
+
+const ZOOM_LEVELS = {
+    0: 1,
+    1: 2
+};
 
 // used to colour objects/trees within the wilderness
 function inWilderness(x, y) {
@@ -114,6 +120,10 @@ class WorldMap {
         // taken every X ms to determine how far to fling the map
         this.lastSample = 0;
 
+        // current zoom level (-2, 0, +2)
+        this.zoomLevel = 0;
+        this.zoomScale = 1;
+
         Object.assign(this.container.style, CONTAINER_STYLES);
 
         this.planeWrap = document.createElement('div');
@@ -143,6 +153,7 @@ class WorldMap {
                     'base64'
                 )}`;
 
+                imageEl.style.transformOrigin = '0 0';
                 imageEl.style.imageRendering = '-moz-crisp-edges';
                 imageEl.style.pointerEvents = 'none';
                 imageEl.style.userSelect = 'none';
@@ -179,14 +190,14 @@ class WorldMap {
     scrollMap() {
         if (this.mapRelativeX > 0) {
             this.mapRelativeX = 0;
-        } else if (this.mapRelativeX < -IMAGE_WIDTH) {
-            this.mapRelativeX = -IMAGE_WIDTH;
+        } else if (this.mapRelativeX < -(IMAGE_WIDTH * this.zoomScale)) {
+            this.mapRelativeX = -(IMAGE_WIDTH * this.zoomScale);
         }
 
         if (this.mapRelativeY > 0) {
             this.mapRelativeY = 0;
-        } else if (this.mapRelativeY < -IMAGE_HEIGHT) {
-            this.mapRelativeY = -IMAGE_HEIGHT;
+        } else if (this.mapRelativeY < -(IMAGE_HEIGHT * this.zoomScale)) {
+            this.mapRelativeY = -(IMAGE_HEIGHT * this.zoomScale);
         }
 
         const x = `${Math.floor(this.mapRelativeX)}px`;
@@ -209,7 +220,7 @@ class WorldMap {
 
     attachHandlers() {
         const mouseDown = (event) => {
-            if (this.mouseDown || this.keyElements.open) {
+            if (this.mouseDown || this.keyElements.open || event.button === 2) {
                 return;
             }
 
@@ -322,6 +333,7 @@ class WorldMap {
 
     addObjects() {
         this.objectCanvas = document.createElement('canvas');
+        this.objectCanvas.style.transformOrigin = '0 0';
         Object.assign(this.objectCanvas.style, OBJECT_CANVAS_STYLES);
 
         this.objectCanvas.width = IMAGE_WIDTH;
@@ -351,6 +363,49 @@ class WorldMap {
         this.planeWrap.appendChild(this.objectCanvas);
     }
 
+    zoom(level) {
+        const scale = ZOOM_LEVELS[level];
+        const transform = `scale(${scale})`;
+
+        this.mapRelativeX *= scale / this.zoomScale;
+        this.mapRelativeY *= scale / this.zoomScale;
+
+        if (level === 0) {
+            this.mapRelativeX += this.container.clientWidth / 4;
+            this.mapRelativeY += this.container.clientHeight / 4;
+        } else if (level === 1) {
+            this.mapRelativeX -= this.container.clientWidth / 2;
+            this.mapRelativeY -= this.container.clientHeight / 2;
+        }
+
+        this.planeWrap.style.transition = '';
+        this.planeImage.style.transform = transform;
+        this.objectCanvas.style.transform = transform;
+
+        for (const child of this.planeWrap.children) {
+            if (child.tagName === 'IMG' || child.tagName === 'CANVAS') {
+                continue;
+            }
+
+            const x = Number.parseInt(child.style.left.slice(0, -2));
+            const y = Number.parseInt(child.style.top.slice(0, -2));
+
+            if (child.tagName === 'SPAN') {
+                const width = child.style.width
+                    ? Number.parseInt(child.style.width.slice(0, -2))
+                    : child.clientWidth;
+
+                child.style.width = `${width * (scale / this.zoomScale)}px`;
+            }
+
+            child.style.left = `${x * (scale / this.zoomScale)}px`;
+            child.style.top = `${y * (scale / this.zoomScale)}px`;
+        }
+
+        this.zoomLevel = level;
+        this.zoomScale = scale;
+    }
+
     async init() {
         await this.loadImages();
 
@@ -358,7 +413,8 @@ class WorldMap {
         await this.pointElements.init();
 
         this.planeWrap.innerHTML = '';
-        this.planeWrap.appendChild(this.planeImages[0]);
+        this.planeImage = this.planeImages[0];
+        this.planeWrap.appendChild(this.planeImage);
         this.addObjects();
         this.addPoints();
         this.addLabels();
