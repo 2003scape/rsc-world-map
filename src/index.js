@@ -37,7 +37,8 @@ const LABEL_STYLES = {
     position: 'absolute',
     userSelect: 'none',
     textShadow: '1px 1px #000',
-    display: 'block'
+    display: 'block',
+    whiteSpace: 'nowrap'
 };
 
 const OBJECT_CANVAS_STYLES = {
@@ -313,7 +314,7 @@ class WorldMap {
                 fontSize: `${label.size + 2}px`,
                 fontWeight: label.bold ? 'bold' : 'normal',
                 top: `${y}px`,
-                left: `${x}px`
+                left: `${x}px`,
             };
 
             Object.assign(labelEl.style, Object.assign(styles, LABEL_STYLES));
@@ -387,15 +388,20 @@ class WorldMap {
                 continue;
             }
 
-            const x = Number.parseInt(child.style.left.slice(0, -2));
-            const y = Number.parseInt(child.style.top.slice(0, -2));
+            let x = Number.parseInt(child.style.left.slice(0, -2));
+            let y = Number.parseInt(child.style.top.slice(0, -2));
 
             if (child.tagName === 'SPAN') {
-                const width = child.style.width
-                    ? Number.parseInt(child.style.width.slice(0, -2))
-                    : child.clientWidth;
-
+                const { width } = child.getBoundingClientRect();
                 child.style.width = `${width * (scale / this.zoomScale)}px`;
+            } else if (child.tagName === 'DIV') {
+                if (level === 0) {
+                    x -= 7.5;
+                    y -= 7.5;
+                } else if (level === 1) {
+                    x += 4;
+                    y += 4;
+                }
             }
 
             child.style.left = `${x * (scale / this.zoomScale)}px`;
