@@ -51,7 +51,6 @@ const POINT_WRAP_STYLES = {
     borderRadius: '8px',
     width: '15px',
     height: '15px',
-    position: 'absolute',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center'
@@ -104,7 +103,7 @@ class PointElements {
                 type
             ].toString('base64')}`;
 
-            imageEl.style.imageRendering = '-moz-crisp-edges';
+            //imageEl.style.imageRendering = '-moz-crisp-edges';
             imageEl.style.pointerEvents = 'none';
             imageEl.style.userSelect = 'none';
 
@@ -117,8 +116,11 @@ class PointElements {
     getPoint(type, x, y) {
         const el = this.elements[type].cloneNode(true);
 
-        el.style.top = `${y}px`;
-        el.style.left = `${x}px`;
+        if (typeof x == 'number') {
+            el.style.position = 'absolute';
+            el.style.top = `${y}px`;
+            el.style.left = `${x}px`;
+        }
 
         return el;
     }
