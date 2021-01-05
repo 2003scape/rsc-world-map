@@ -1,3 +1,4 @@
+const PointElements = require('./point-elements');
 const defaultLabels = require('../res/labels');
 const defaultObjects = require('../res/objects');
 const defaultPoints = require('../res/points');
@@ -11,51 +12,6 @@ const PLANE_IMAGES = [
     fs.readFileSync('./res/plane-2.png'),
     fs.readFileSync('./res/plane-3.png')
 ];
-
-const KEY_IMAGES = {
-    altar: fs.readFileSync('./res/key/altar.png'),
-    'amulet-shop': fs.readFileSync('./res/key/amulet-shop.png'),
-    anvil: fs.readFileSync('./res/key/anvil.png'),
-    apothecary: fs.readFileSync('./res/key/apothecary.png'),
-    'archery-shop': fs.readFileSync('./res/key/archery-shop.png'),
-    'armour-conversion': fs.readFileSync('./res/key/armour-conversion.png'),
-    'axe-shop': fs.readFileSync('./res/key/axe-shop.png'),
-    bank: fs.readFileSync('./res/key/bank.png'),
-    bed: fs.readFileSync('./res/key/bed.png'),
-    'body-armour-shop': fs.readFileSync('./res/key/body-armour-shop.png'),
-    'certificate-trader': fs.readFileSync('./res/key/certificate-trader.png'),
-    'clothes-shop': fs.readFileSync('./res/key/clothes-shop.png'),
-    'combat-practice': fs.readFileSync('./res/key/combat-practice.png'),
-    'cookery-shop': fs.readFileSync('./res/key/cookery-shop.png'),
-    'crafting-shop': fs.readFileSync('./res/key/crafting-shop.png'),
-    dungeon: fs.readFileSync('./res/key/dungeon.png'),
-    'fishing-point': fs.readFileSync('./res/key/fishing-point.png'),
-    'fishing-shop': fs.readFileSync('./res/key/fishing-shop.png'),
-    'food-shop': fs.readFileSync('./res/key/food-shop.png'),
-    furnace: fs.readFileSync('./res/key/furnace.png'),
-    'gem-shop': fs.readFileSync('./res/key/gem-shop.png'),
-    'general-shop': fs.readFileSync('./res/key/general-shop.png'),
-    'helmet-shop': fs.readFileSync('./res/key/helmet-shop.png'),
-    'herblaw-shop': fs.readFileSync('./res/key/herblaw-shop.png'),
-    'jewellery-shop': fs.readFileSync('./res/key/jewellery-shop.png'),
-    'kebab-shop': fs.readFileSync('./res/key/kebab-shop.png'),
-    'leg-armour-shop': fs.readFileSync('./res/key/leg-armour-shop.png'),
-    'mace-shop': fs.readFileSync('./res/key/mace-shop.png'),
-    'magic-shop': fs.readFileSync('./res/key/magic-shop.png'),
-    'mining-site': fs.readFileSync('./res/key/mining-site.png'),
-    'pickable-lock': fs.readFileSync('./res/key/pickable-lock.png'),
-    pub: fs.readFileSync('./res/key/pub.png'),
-    quest: fs.readFileSync('./res/key/quest.png'),
-    'rare-trees': fs.readFileSync('./res/key/rare-trees.png'),
-    'scimitar-shop': fs.readFileSync('./res/key/scimitar-shop.png'),
-    'shield-shop': fs.readFileSync('./res/key/shield-shop.png'),
-    'silk-trader': fs.readFileSync('./res/key/silk-trader.png'),
-    'skirt-armour-shop': fs.readFileSync('./res/key/skirt-armour-shop.png'),
-    'spinning-wheel': fs.readFileSync('./res/key/spinning-wheel.png'),
-    'staff-shop': fs.readFileSync('./res/key/staff-shop.png'),
-    'sword-shop': fs.readFileSync('./res/key/sword-shop.png'),
-    tannery: fs.readFileSync('./res/key/tannery.png')
-};
 
 const STONE_IMAGE = fs.readFileSync('./res/stone-background.png');
 
@@ -95,6 +51,18 @@ const KEY_BUTTON_STYLES = {
     )})`
 };
 
+const KEY_BOX_STYLES = {
+    backgroundColor: '#000',
+    border: '2px solid #fff',
+    outline: '2px solid #000',
+    width: '50%',
+    height: '80%',
+    position: 'absolute',
+    top: '10%',
+    left: '25%'
+    //visibility: 'hidden'
+};
+
 const LABEL_STYLES = {
     position: 'absolute',
     userSelect: 'none',
@@ -121,16 +89,6 @@ const WILD_TREE_IMAGE = makeObjectImage(WILD_TREE_COLOUR);
 // used to colour objects/trees within the wilderness
 function inWilderness(x, y) {
     return x >= 1440 && x <= 2304 && y >= 286 && y <= 1286;
-}
-
-// de-slug a point of interest key
-function formatPointTitle(type) {
-    return type
-        .split('-')
-        .map((segment) => {
-            return segment[0].toUpperCase() + segment.slice(1);
-        })
-        .join(' ');
 }
 
 function applyStyles(element, styles) {
@@ -194,28 +152,30 @@ class WorldMap {
 
         applyStyles(this.keyButton, KEY_BUTTON_STYLES);
 
+        this.keyBox = document.createElement('div');
+
+        applyStyles(this.keyBox, KEY_BOX_STYLES);
+
         this._scrollMap = this.scrollMap.bind(this);
     }
 
     loadImages() {
         return new Promise((resolve, reject) => {
-            let total = PLANE_IMAGES.length + Object.keys(KEY_IMAGES).length;
-
+            const total = PLANE_IMAGES.length;
             let loaded = 0;
-
-            const onload = () => {
-                loaded += 1;
-
-                if (loaded === total) {
-                    resolve();
-                }
-            };
 
             this.planeImages = PLANE_IMAGES.map((image) => {
                 const imageEl = new Image();
                 imageEl.onerror = reject;
 
-                imageEl.onload = onload;
+                imageEl.onload = () => {
+                    loaded += 1;
+
+                    if (loaded === total) {
+                        resolve();
+                    }
+                };
+
                 imageEl.src = `data:image/png;base64,${image.toString(
                     'base64'
                 )}`;
@@ -226,20 +186,6 @@ class WorldMap {
 
                 return imageEl;
             });
-
-            this.keyImages = {};
-
-            for (const [name, image] of Object.entries(KEY_IMAGES)) {
-                const imageEl = new Image();
-                imageEl.onerror = reject;
-
-                imageEl.onload = onload;
-                imageEl.src = `data:image/png;base64,${image.toString(
-                    'base64'
-                )}`;
-
-                this.keyImages[name] = image;
-            }
         });
     }
 
@@ -424,34 +370,7 @@ class WorldMap {
             x -= MIN_REGION_X * SECTOR_SIZE * TILE_SIZE;
             y -= MIN_REGION_Y * SECTOR_SIZE * TILE_SIZE;
 
-            const wrapEl = document.createElement('div');
-            wrapEl.style.backgroundColor = '#c0c0c0';
-            wrapEl.style.border = '1px solid #000';
-            wrapEl.style.borderRadius = '8px';
-            wrapEl.style.width = '15px';
-            wrapEl.style.height = '15px';
-            wrapEl.style.top = `${y}px`;
-            wrapEl.style.left = `${x}px`;
-            wrapEl.style.position = 'absolute';
-            wrapEl.style.display = 'flex';
-            wrapEl.style.alignItems = 'center';
-            wrapEl.style.justifyContent = 'center';
-
-            wrapEl.title = formatPointTitle(type);
-
-            const imageEl = document.createElement('img');
-
-            imageEl.src = `data:image/png;base64,${this.keyImages[
-                type
-            ].toString('base64')}`;
-
-            imageEl.style.imageRendering = '-moz-crisp-edges';
-            imageEl.style.pointerEvents = 'none';
-            imageEl.style.userSelect = 'none';
-
-            wrapEl.appendChild(imageEl);
-
-            this.planeWrap.appendChild(wrapEl);
+            this.planeWrap.appendChild(this.pointElements.getPoint(type, x, y));
         }
     }
 
@@ -494,6 +413,9 @@ class WorldMap {
     async init() {
         await this.loadImages();
 
+        this.pointElements = new PointElements();
+        await this.pointElements.init();
+
         this.planeWrap.innerHTML = '';
         this.planeWrap.appendChild(this.planeImages[0]);
         this.addObjects();
@@ -502,6 +424,7 @@ class WorldMap {
 
         this.container.appendChild(this.planeWrap);
         this.container.appendChild(this.keyButton);
+        this.container.appendChild(this.keyBox);
 
         this.attachHandlers();
         this.scrollMap();
