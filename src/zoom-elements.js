@@ -17,14 +17,14 @@ class ZoomElements {
         zoomIn.addEventListener(
             'click',
             () => {
-                if (this.worldMap.zoomLevel >= 1) {
+                if (this.worldMap.zoomLevel >= 2) {
                     return;
                 }
 
                 this.worldMap.zoom(this.worldMap.zoomLevel + 1);
                 enableButton(zoomOut);
 
-                if (this.worldMap.zoomLevel >= 1) {
+                if (this.worldMap.zoomLevel >= 2) {
                     disableButton(zoomIn);
                 }
             },

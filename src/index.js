@@ -68,7 +68,8 @@ const WILD_TREE_IMAGE = makeObjectImage(WILD_TREE_COLOUR);
 const ZOOM_LEVELS = {
     '-1': 0.5,
     0: 1,
-    1: 2
+    1: 2,
+    2: 4
 };
 
 // used to colour objects/trees within the wilderness
@@ -125,6 +126,7 @@ class WorldMap {
         this.zoomLevel = 0;
         this.zoomScale = 1;
 
+        this.container.tabIndex = 0;
         Object.assign(this.container.style, CONTAINER_STYLES);
 
         this.planeWrap = document.createElement('div');
@@ -383,16 +385,15 @@ class WorldMap {
         this.mapRelativeX *= translateScale;
         this.mapRelativeY *= translateScale;
 
-        // centre the viewport
-        if (zoomLevel === -1) {
-            this.mapRelativeX += this.container.clientWidth / 4;
-            this.mapRelativeY += this.container.clientHeight / 4;
-        } else if (this.zoomLevel > 0 && zoomLevel === 0) {
-            this.mapRelativeX += this.container.clientWidth / 4;
-            this.mapRelativeY += this.container.clientHeight / 4;
-        } else if (zoomLevel === 1 || (this.zoomLevel < 0 && zoomLevel === 0)) {
-            this.mapRelativeX -= this.container.clientWidth / 2;
-            this.mapRelativeY -= this.container.clientHeight / 2;
+        if (zoomLevel > this.zoomLevel) {
+            this.mapRelativeX -= this.container.clientWidth / translateScale;
+            this.mapRelativeY -= this.container.clientHeight / translateScale;
+        } else {
+            this.mapRelativeX +=
+                (this.container.clientWidth * translateScale) / 2;
+
+            this.mapRelativeY +=
+                (this.container.clientHeight * translateScale) / 2;
         }
 
         for (const child of this.planeWrap.children) {
@@ -414,22 +415,22 @@ class WorldMap {
 
             if (zoomLevel === -1) {
                 child.style.transform = transform;
-            } else if (zoomLevel === 1) {
+            } else if (zoomLevel === 1 || zoomLevel === 2) {
                 let offsetX = 0;
                 let offsetY = 0;
 
                 if (child.tagName === 'SPAN') {
+                    const { width, height } = child.getBoundingClientRect();
+
                     if (child.style.textAlign === 'center') {
-                        const { width } = child.getBoundingClientRect();
-                        child.style.width = `${width * scale}px`;
+                        offsetX = zoomLevel === 1 ? width / 2 : width * 1.5;
                     }
 
-                    const fontSize = Number(child.style.fontSize.slice(0, -2));
-
-                    offsetY = fontSize / 2;
+                    //const fontSize = Number(child.style.fontSize.slice(0, -2));
+                    offsetY = zoomLevel === 1 ? height / 2 : height * 1.5;
                 } else if (child.tagName === 'DIV') {
-                    offsetX += 8;
-                    offsetY += 8;
+                    offsetX += zoomLevel === 1 ? 7.5 : 30;
+                    offsetY += zoomLevel === 1 ? 7.5 : 30;
                 }
 
                 child.style.margin = `${offsetY}px 0 0 ${offsetX}px`;

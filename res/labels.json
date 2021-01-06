@@ -580,10 +580,10 @@
     },
     {
         "text": "Shantay Pass",
-        "x": 9130,
+        "x": 9134,
         "y": 7496,
         "size": 10,
-        "align": "left"
+        "align": "center"
     },
     {
         "text": "Bedabin\nCamp",
@@ -668,7 +668,7 @@
     },
     {
         "text": "Chaos\nTemple",
-        "x": 8988,
+        "x": 8990,
         "y": 6396,
         "size": 10,
         "align": "center"
@@ -696,10 +696,10 @@
     },
     {
         "text": "Graveyard",
-        "x": 8800,
+        "x": 8804,
         "y": 6274,
         "size": 10,
-        "align": "left"
+        "align": "center"
     },
     {
         "text": "Bone Yard",
@@ -746,7 +746,7 @@
     {
         "text": "Pirates'\nHideout",
         "x": 8540,
-        "y": 5644,
+        "y": 5640,
         "size": 10,
         "align": "center"
     },
@@ -780,8 +780,8 @@
     },
     {
         "text": "Rouges'\nHouse",
-        "x": 9108,
-        "y": 5646,
+        "x": 9109,
+        "y": 5642,
         "size": 8,
         "align": "center"
     },

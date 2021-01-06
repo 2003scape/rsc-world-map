@@ -65,6 +65,7 @@ class KeyElements {
         // bordered black box wrapping the options and toggles
         const box = document.createElement('div');
         Object.assign(box.style, BOX_STYLES);
+        box.tabIndex = 0;
 
         // toggle the text labels
         box.appendChild(this.getHeader('Display'));

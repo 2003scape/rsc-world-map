@@ -53,7 +53,8 @@ const POINT_WRAP_STYLES = {
     height: '15px',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    transformOrigin: '0 0'
 };
 
 class PointElements {
