@@ -1,5 +1,6 @@
-const PointElements = require('./point-elements');
 const KeyElements = require('./key-elements');
+const PointElements = require('./point-elements');
+const SearchElements = require('./search-elements');
 const ZoomElements = require('./zoom-elements');
 const defaultLabels = require('../res/labels');
 const defaultObjects = require('../res/objects');
@@ -127,6 +128,7 @@ class WorldMap {
         this.zoomScale = 1;
 
         this.container.tabIndex = 0;
+
         Object.assign(this.container.style, CONTAINER_STYLES);
 
         this.planeWrap = document.createElement('div');
@@ -426,11 +428,10 @@ class WorldMap {
                         offsetX = zoomLevel === 1 ? width / 2 : width * 1.5;
                     }
 
-                    //const fontSize = Number(child.style.fontSize.slice(0, -2));
                     offsetY = zoomLevel === 1 ? height / 2 : height * 1.5;
                 } else if (child.tagName === 'DIV') {
-                    offsetX += zoomLevel === 1 ? 7.5 : 30;
-                    offsetY += zoomLevel === 1 ? 7.5 : 30;
+                    offsetX += zoomLevel === 1 ? 7.5 : 22.5;
+                    offsetY += zoomLevel === 1 ? 7.5 : 22.5;
                 }
 
                 child.style.margin = `${offsetY}px 0 0 ${offsetX}px`;
@@ -463,6 +464,9 @@ class WorldMap {
 
         this.zoomElements = new ZoomElements(this);
         this.zoomElements.init();
+
+        this.searchElements = new SearchElements(this);
+        this.searchElements.init();
 
         this.attachHandlers();
         this.scrollMap();
