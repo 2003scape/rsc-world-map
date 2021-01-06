@@ -372,7 +372,7 @@
         "x": 8365,
         "y": 7285,
         "size": 11,
-        "align": "center"
+        "align": "left"
     },
     {
         "text": "Black\nKnights",
@@ -762,7 +762,7 @@
         "x": 8640,
         "y": 5714,
         "size": 10,
-        "align": "left"
+        "align": "center"
     },
     {
         "text": "Deserted\nKeep",
@@ -790,7 +790,7 @@
         "x": 8713,
         "y": 6020,
         "size": 14,
-        "align": "left",
+        "align": "center",
         "bold": true,
         "colour": "rgb(254, 165, 0)"
     }

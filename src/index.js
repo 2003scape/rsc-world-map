@@ -6,8 +6,6 @@ const defaultObjects = require('../res/objects');
 const defaultPoints = require('../res/points');
 const fs = require('fs');
 
-// all of these are inlined for brfs:
-
 const PLANE_IMAGES = [
     fs.readFileSync('./res/plane-0.png'),
     fs.readFileSync('./res/plane-1.png'),
@@ -314,7 +312,7 @@ class WorldMap {
                 fontSize: `${label.size + 2}px`,
                 fontWeight: label.bold ? 'bold' : 'normal',
                 top: `${y}px`,
-                left: `${x}px`,
+                left: `${x}px`
             };
 
             Object.assign(labelEl.style, Object.assign(styles, LABEL_STYLES));
@@ -364,51 +362,70 @@ class WorldMap {
         this.planeWrap.appendChild(this.objectCanvas);
     }
 
-    zoom(level) {
-        const scale = ZOOM_LEVELS[level];
+    zoom(zoomLevel) {
+        const scale = ZOOM_LEVELS[zoomLevel];
         const transform = `scale(${scale})`;
 
-        this.mapRelativeX *= scale / this.zoomScale;
-        this.mapRelativeY *= scale / this.zoomScale;
+        this.planeWrap.style.transition = '';
 
-        if (level === 0) {
+        // scale the entire map image, but not the points or text labels:
+        this.planeImage.style.transform = transform;
+        this.objectCanvas.style.transform = transform;
+
+        // move text labels and points to match up with the new zoomed-in image:
+        const translateScale = scale / this.zoomScale;
+
+        this.mapRelativeX *= translateScale;
+        this.mapRelativeY *= translateScale;
+
+        // centre the viewport
+        if (zoomLevel === 0) {
             this.mapRelativeX += this.container.clientWidth / 4;
             this.mapRelativeY += this.container.clientHeight / 4;
-        } else if (level === 1) {
+        } else if (zoomLevel === 1) {
             this.mapRelativeX -= this.container.clientWidth / 2;
             this.mapRelativeY -= this.container.clientHeight / 2;
         }
-
-        this.planeWrap.style.transition = '';
-        this.planeImage.style.transform = transform;
-        this.objectCanvas.style.transform = transform;
 
         for (const child of this.planeWrap.children) {
             if (child.tagName === 'IMG' || child.tagName === 'CANVAS') {
                 continue;
             }
 
-            let x = Number.parseInt(child.style.left.slice(0, -2));
-            let y = Number.parseInt(child.style.top.slice(0, -2));
+            const x = Number.parseInt(child.style.left.slice(0, -2));
+            const y = Number.parseInt(child.style.top.slice(0, -2));
 
-            if (child.tagName === 'SPAN') {
-                const { width } = child.getBoundingClientRect();
-                child.style.width = `${width * (scale / this.zoomScale)}px`;
-            } else if (child.tagName === 'DIV') {
-                if (level === 0) {
-                    x -= 7.5;
-                    y -= 7.5;
-                } else if (level === 1) {
-                    x += 4;
-                    y += 4;
+            child.style.left = `${x * translateScale}px`;
+            child.style.top = `${y * translateScale}px`;
+
+            let offsetX = 0;
+            let offsetY = 0;
+
+            if (zoomLevel === 0) {
+                child.style.margin = '';
+
+                if (child.tagName === 'SPAN') {
+                    child.style.width = 'auto';
+                }
+            } else if (zoomLevel === 1) {
+                if (child.tagName === 'SPAN') {
+                    if (child.style.textAlign === 'center') {
+                        const { width } = child.getBoundingClientRect();
+                        child.style.width = `${width * scale}px`;
+                    }
+
+                    const fontSize = Number(child.style.fontSize.slice(0, -2));
+                    offsetY = fontSize / 2;
+                } else if (child.tagName === 'DIV') {
+                    offsetX += 8;
+                    offsetY += 8;
                 }
             }
 
-            child.style.left = `${x * (scale / this.zoomScale)}px`;
-            child.style.top = `${y * (scale / this.zoomScale)}px`;
+            child.style.margin = `${offsetY}px ${offsetX}px 0 0`;
         }
 
-        this.zoomLevel = level;
+        this.zoomLevel = zoomLevel;
         this.zoomScale = scale;
     }
 
@@ -416,10 +433,12 @@ class WorldMap {
         await this.loadImages();
 
         this.pointElements = new PointElements();
+
         await this.pointElements.init();
 
         this.planeWrap.innerHTML = '';
         this.planeImage = this.planeImages[0];
+
         this.planeWrap.appendChild(this.planeImage);
         this.addObjects();
         this.addPoints();
