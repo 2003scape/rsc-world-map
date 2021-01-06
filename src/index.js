@@ -36,7 +36,8 @@ const LABEL_STYLES = {
     userSelect: 'none',
     textShadow: '1px 1px #000',
     display: 'block',
-    whiteSpace: 'nowrap'
+    whiteSpace: 'nowrap',
+    transformOrigin: '0 0'
 };
 
 const OBJECT_CANVAS_STYLES = {
@@ -65,6 +66,7 @@ const TREE_IMAGE = makeObjectImage(TREE_COLOUR);
 const WILD_TREE_IMAGE = makeObjectImage(WILD_TREE_COLOUR);
 
 const ZOOM_LEVELS = {
+    '-1': 0.5,
     0: 1,
     1: 2
 };
@@ -304,6 +306,9 @@ class WorldMap {
 
             const labelEl = document.createElement('span');
 
+            labelEl.dataset.x = x;
+            labelEl.dataset.y = y;
+
             labelEl.innerText = label.text;
 
             const styles = {
@@ -379,10 +384,13 @@ class WorldMap {
         this.mapRelativeY *= translateScale;
 
         // centre the viewport
-        if (zoomLevel === 0) {
+        if (zoomLevel === -1) {
             this.mapRelativeX += this.container.clientWidth / 4;
             this.mapRelativeY += this.container.clientHeight / 4;
-        } else if (zoomLevel === 1) {
+        } else if (this.zoomLevel > 0 && zoomLevel === 0) {
+            this.mapRelativeX += this.container.clientWidth / 4;
+            this.mapRelativeY += this.container.clientHeight / 4;
+        } else if (zoomLevel === 1 || (this.zoomLevel < 0 && zoomLevel === 0)) {
             this.mapRelativeX -= this.container.clientWidth / 2;
             this.mapRelativeY -= this.container.clientHeight / 2;
         }
@@ -392,22 +400,24 @@ class WorldMap {
                 continue;
             }
 
-            const x = Number.parseInt(child.style.left.slice(0, -2));
-            const y = Number.parseInt(child.style.top.slice(0, -2));
+            const x = Number(child.dataset.x);
+            const y = Number(child.dataset.y);
 
-            child.style.left = `${x * translateScale}px`;
-            child.style.top = `${y * translateScale}px`;
+            child.style.left = `${x * scale}px`;
+            child.style.top = `${y * scale}px`;
+            child.style.margin = '';
+            child.style.transform = '';
 
-            let offsetX = 0;
-            let offsetY = 0;
+            if (child.tagName === 'SPAN') {
+                child.style.width = 'auto';
+            }
 
-            if (zoomLevel === 0) {
-                child.style.margin = '';
-
-                if (child.tagName === 'SPAN') {
-                    child.style.width = 'auto';
-                }
+            if (zoomLevel === -1) {
+                child.style.transform = transform;
             } else if (zoomLevel === 1) {
+                let offsetX = 0;
+                let offsetY = 0;
+
                 if (child.tagName === 'SPAN') {
                     if (child.style.textAlign === 'center') {
                         const { width } = child.getBoundingClientRect();
@@ -415,14 +425,15 @@ class WorldMap {
                     }
 
                     const fontSize = Number(child.style.fontSize.slice(0, -2));
+
                     offsetY = fontSize / 2;
                 } else if (child.tagName === 'DIV') {
                     offsetX += 8;
                     offsetY += 8;
                 }
-            }
 
-            child.style.margin = `${offsetY}px ${offsetX}px 0 0`;
+                child.style.margin = `${offsetY}px 0 0 ${offsetX}px`;
+            }
         }
 
         this.zoomLevel = zoomLevel;

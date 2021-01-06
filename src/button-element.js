@@ -34,7 +34,9 @@ function getButton(text, title) {
     buttonEl.addEventListener(
         'mouseover',
         () => {
-            buttonEl.style.opacity = 1;
+            if (!buttonEl.disabled) {
+                buttonEl.style.opacity = 1;
+            }
         },
         false
     );
@@ -50,4 +52,15 @@ function getButton(text, title) {
     return buttonEl;
 }
 
-module.exports = { getButton };
+function enableButton(buttonEl) {
+    buttonEl.disabled = false;
+    buttonEl.style.cursor = 'pointer';
+}
+
+function disableButton(buttonEl) {
+    buttonEl.disabled = true;
+    buttonEl.style.cursor = 'not-allowed';
+    buttonEl.style.opacity = 0.6;
+}
+
+module.exports = { getButton, enableButton, disableButton };

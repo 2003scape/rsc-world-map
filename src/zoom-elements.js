@@ -1,4 +1,7 @@
-const { getButton } = require('./button-element');
+const { getButton, enableButton, disableButton } = require('./button-element');
+
+const ZOOM_IN_STYLES = { width: '32px', bottom: '16px', right: '58px' };
+const ZOOM_OUT_STYLES = { width: '32px', bottom: '16px', right: '16px' };
 
 class ZoomElements {
     constructor(worldMap) {
@@ -6,23 +9,44 @@ class ZoomElements {
         this.container = this.worldMap.container;
 
         const zoomIn = getButton('+', 'Zoom in.');
+        Object.assign(zoomIn.style, ZOOM_IN_STYLES);
+
         const zoomOut = getButton('-', 'Zoom out.');
+        Object.assign(zoomOut.style, ZOOM_OUT_STYLES);
 
-        zoomIn.addEventListener('click', () => {
-            worldMap.zoom(1);
-        }, false);
+        zoomIn.addEventListener(
+            'click',
+            () => {
+                if (this.worldMap.zoomLevel >= 1) {
+                    return;
+                }
 
-        zoomOut.addEventListener('click', () => {
-            worldMap.zoom(0);
-        }, false);
+                this.worldMap.zoom(this.worldMap.zoomLevel + 1);
+                enableButton(zoomOut);
 
-        zoomIn.style.width = '32px';
-        zoomIn.style.bottom = '16px';
-        zoomIn.style.right = '58px';
+                if (this.worldMap.zoomLevel >= 1) {
+                    disableButton(zoomIn);
+                }
+            },
+            false
+        );
 
-        zoomOut.style.width = '32px';
-        zoomOut.style.bottom = '16px';
-        zoomOut.style.right = '16px';
+        zoomOut.addEventListener(
+            'click',
+            () => {
+                if (this.worldMap.zoomLevel <= -1) {
+                    return;
+                }
+
+                this.worldMap.zoom(this.worldMap.zoomLevel - 1);
+                enableButton(zoomIn);
+
+                if (this.worldMap.zoomLevel <= -1) {
+                    disableButton(zoomOut);
+                }
+            },
+            false
+        );
 
         this.elements = { zoomIn, zoomOut };
     }

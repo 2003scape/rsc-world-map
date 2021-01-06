@@ -119,6 +119,9 @@ class PointElements {
         el.dataset.pointType = type;
 
         if (typeof x == 'number') {
+            el.dataset.x = x;
+            el.dataset.y = y;
+
             el.style.position = 'absolute';
             el.style.top = `${y}px`;
             el.style.left = `${x}px`;
