@@ -58,7 +58,7 @@ classic entries (located in `./res`):
 ```
 
 `points` are used for the point-of-interest symbols on the map. there's a list
-of point types in [`./res/key.json`](/blob/master/res/key.json):
+of point types in [`./res/key.json`](/res/key.json):
 
 ```javascript
 { "type": "altar", "x": 7253, "y": 7272 }
