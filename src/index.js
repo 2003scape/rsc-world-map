@@ -448,15 +448,14 @@ class WorldMap {
                 this.mapRelativeX =
                     this.zoomScale * -Number(child.dataset.x) +
                     this.container.clientWidth / 2 -
-                    (child.clientWidth * this.zoomScale) / 4 -
-                    ((Number(child.style.marginLeft.slice(0, -2)) || 0) / 2);
+                    child.clientWidth / 2 -
+                    (Number.parseFloat(child.style.marginLeft) || 0);
 
                 this.mapRelativeY =
                     this.zoomScale * -Number(child.dataset.y) +
-                    this.container.clientHeight / 2 -
-                    (child.clientHeight * this.zoomScale) / 2 +
-                    ((Number(child.style.marginTop.slice(0, -2)) || 0) / 2);
-
+                    (this.container.clientHeight / 2) -
+                    child.clientHeight / 2 -
+                    (Number.parseFloat(child.style.marginTop) || 0);
 
                 this.scrollMap();
 
