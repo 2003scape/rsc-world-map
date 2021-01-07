@@ -1,4 +1,5 @@
 const { getButton } = require('./button-element');
+
 const INPUT_STYLES = {
     width: 'calc(100% - 174px)',
     boxSizing: 'border-box',
@@ -132,14 +133,14 @@ class SearchElements {
                 this.worldMap.planeWrap.style.transition =
                     'transform 0.5s ease-in';
 
-                this.worldMap.mapRelativeX =
+                this.worldMap.draggable.mapRelativeX =
                     this.worldMap.zoomElements.scale *
                         -Number(child.dataset.x) +
                     this.worldMap.container.clientWidth / 2 -
                     child.clientWidth / 2 -
                     (Number.parseFloat(child.style.marginLeft) || 0);
 
-                this.worldMap.mapRelativeY =
+                this.worldMap.draggable.mapRelativeY =
                     this.worldMap.zoomElements.scale *
                         -Number(child.dataset.y) +
                     this.worldMap.container.clientHeight / 2 -

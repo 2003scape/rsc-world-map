@@ -8,6 +8,7 @@ const defaultObjects = require('../res/objects');
 const defaultPoints = require('../res/points');
 const fs = require('fs');
 const { getObjectImage } = require('./object-image');
+const { useDraggable } = require('./draggable');
 
 const PLANE_IMAGES = [
     fs.readFileSync('./res/plane-0.png'),
@@ -62,8 +63,11 @@ const PLANE_IMAGE_STYLES = {
     userSelect: 'none'
 };
 
-// how often (in ms) to record the last coordinate when we move the mouse
-const DRAG_SAMPLE_THRESHOLD = 100;
+const PLANE_WRAP_STYLES = {
+    position: 'absolute',
+    top: 0,
+    left: 0
+};
 
 class WorldMap {
     constructor({ container, labels, points, objects }) {
@@ -72,39 +76,15 @@ class WorldMap {
         this.points = points || defaultPoints;
         this.objects = objects || defaultObjects;
 
-        this.mouseDown = false;
-
-        // the top and left px of the planewrap element
-        this.mapRelativeX = -1908;
-        this.mapRelativeY = -1822;
-
-        // the mapRelative positions when we first click
-        this.startMapY = -1;
-        this.startMapX = -1;
-
-        // the relative mouse positions (from the container element) when first
-        // clicked
-        this.startMouseX = -1;
-        this.startMouseY = -1;
-
-        // the position of the map at a sampled rate for the drag effect
-        this.dragMapX = -1;
-        this.dragMapY = -1;
-
-        // taken every X ms to determine how far to fling the map
-        this.lastSample = 0;
-
-        // prevent the user from dragging the map
-        this.lockMap = false;
-
         this.container.tabIndex = 0;
 
         Object.assign(this.container.style, CONTAINER_STYLES);
 
         this.planeWrap = document.createElement('div');
-        this.planeWrap.style.position = 'absolute';
+        Object.assign(this.planeWrap.style, PLANE_WRAP_STYLES);
 
-        this._scrollMap = this.scrollMap.bind(this);
+        this.draggable = useDraggable(this.container, this.planeWrap);
+        this.scrollMap = this.draggable.scrollMap;
     }
 
     loadImages() {
@@ -133,153 +113,6 @@ class WorldMap {
                 return imageEl;
             });
         });
-    }
-
-    getMousePosition(event) {
-        event = event.touches ? event.touches[0] : event;
-        const rect = this.container.getBoundingClientRect();
-
-        return {
-            x: event.clientX - rect.left,
-            y: event.clientY - rect.top
-        };
-    }
-
-    getDragDistance() {
-        return Math.sqrt(
-            Math.pow(this.dragMapX - this.mapRelativeX, 2) +
-                Math.pow(this.dragMapY - this.mapRelativeY, 2)
-        );
-    }
-
-    // get the last direction we dragged to fling the map in
-    getScrollDirection(distance) {
-        const deltaX = (this.startMapX - this.mapRelativeX) / distance;
-        const deltaY = (this.startMapY - this.mapRelativeY) / distance;
-
-        return { deltaX, deltaY };
-    }
-
-    // the animation loop that moves the map to a position relative from where
-    // the drag began based on current mouse position
-    scrollMap() {
-        const maxX = -(
-            IMAGE_WIDTH * this.zoomElements.scale -
-            this.container.clientWidth
-        );
-
-        if (this.mapRelativeX > 0) {
-            this.mapRelativeX = 0;
-        } else if (this.mapRelativeX < maxX) {
-            this.mapRelativeX = maxX;
-        }
-
-        const maxY = -(
-            IMAGE_HEIGHT * this.zoomElements.scale -
-            this.container.clientHeight
-        );
-
-        if (this.mapRelativeY > 0) {
-            this.mapRelativeY = 0;
-        } else if (this.mapRelativeY < maxY) {
-            this.mapRelativeY = maxY;
-        }
-
-        const x = `${Math.floor(this.mapRelativeX)}px`;
-        const y = `${Math.floor(this.mapRelativeY)}px`;
-
-        this.planeWrap.style.transform = `translate(${x}, ${y})`;
-
-        if (Date.now() - this.lastSample >= DRAG_SAMPLE_THRESHOLD) {
-            this.dragMapX = this.mapRelativeX;
-            this.dragMapY = this.mapRelativeY;
-            this.lastSample = Date.now();
-        }
-
-        if (!this.mouseDown) {
-            return;
-        }
-
-        window.requestAnimationFrame(this._scrollMap);
-    }
-
-    attachHandlers() {
-        const mouseDown = (event) => {
-            if (this.lockMap || this.mouseDown || event.button === 2) {
-                return;
-            }
-
-            if (this.transitionTimeout) {
-                this.planeWrap.style.transition = '';
-                clearTimeout(this.transitionTimeout);
-            }
-
-            this.container.style.cursor = 'grabbing';
-
-            this.mouseDown = true;
-            this.startMapX = this.mapRelativeX;
-            this.startMapY = this.mapRelativeY;
-            this.lastSample = Date.now();
-
-            const { x, y } = this.getMousePosition(event);
-
-            this.startMouseX = x;
-            this.startMouseY = y;
-
-            this.scrollMap();
-        };
-
-        this.container.addEventListener('mousedown', mouseDown, false);
-        this.container.addEventListener('touchstart', mouseDown, false);
-
-        const mouseUp = () => {
-            if (!this.mouseDown || this.lockMap) {
-                return;
-            }
-
-            if (this.sampleInterval) {
-                clearInterval(this.sampleInterval);
-            }
-
-            const distance = this.getDragDistance();
-
-            if (distance) {
-                const { deltaX, deltaY } = this.getScrollDirection(distance);
-                const delay = Math.floor(200 + distance * 1.25);
-
-                // https://easings.net/#easeOutSine
-                this.planeWrap.style.transition =
-                    `transform 0.${delay}s ` + 'cubic-bezier(0.61, 1, 0.88, 1)';
-
-                this.transitionTimeout = setTimeout(() => {
-                    this.planeWrap.style.transition = '';
-                }, delay);
-
-                this.mapRelativeX -= deltaX * (distance / 2);
-                this.mapRelativeY -= deltaY * (distance / 2);
-            }
-
-            this.mouseDown = false;
-
-            this.container.style.cursor = 'grab';
-        };
-
-        window.addEventListener('mouseup', mouseUp, false);
-        window.addEventListener('touchend', mouseUp, false);
-
-        const mouseMove = (event) => {
-            if (!this.mouseDown || this.lockMap) {
-                return;
-            }
-
-            const { x, y } = this.getMousePosition(event);
-
-            this.mapRelativeX = this.startMapX - (this.startMouseX - x);
-            this.mapRelativeY = this.startMapY - (this.startMouseY - y);
-        };
-
-        window.addEventListener('mousemove', mouseMove, false);
-        window.addEventListener('touchmove', mouseMove, false);
     }
 
     addLabels() {
@@ -373,8 +206,7 @@ class WorldMap {
         this.overviewElements = new OverviewElements(this);
         this.overviewElements.init();
 
-        this.attachHandlers();
-        this.scrollMap();
+        this.searchElements.search('Lumbridge');
     }
 }
 

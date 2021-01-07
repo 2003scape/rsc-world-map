@@ -56,7 +56,7 @@ class KeyElements {
         // the "Key" button in the top right corner, used to toggle the
         // following box
         const button = getButton('Key', 'Toggle key points of interest.');
-        Object.assign(BUTTON_STYLES, button);
+        Object.assign(button.style, BUTTON_STYLES);
 
         // bordered black box wrapping the options and toggles
         const box = getBox();

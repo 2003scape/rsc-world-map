@@ -73,22 +73,31 @@ class ZoomElements {
         this.worldMap.planeImage.style.transform = transform;
         this.worldMap.objectCanvas.style.transform = transform;
 
+        const {
+            width,
+            height
+        } = this.worldMap.planeImage.getBoundingClientRect();
+
+        this.worldMap.planeWrap.style.width = `${width}px`;
+        this.worldMap.planeWrap.style.height = `${height}px`;
+
         // move text labels and points to match up with the new zoomed-in image:
         const translateScale = scale / this.scale;
+        const draggable = this.worldMap.draggable;
 
-        this.worldMap.mapRelativeX *= translateScale;
-        this.worldMap.mapRelativeY *= translateScale;
+        draggable.mapRelativeX *= translateScale;
+        draggable.mapRelativeY *= translateScale;
 
         if (zoomLevel > this.level) {
-            this.worldMap.mapRelativeX -=
+            draggable.mapRelativeX -=
                 this.worldMap.container.clientWidth / translateScale;
-            this.worldMap.mapRelativeY -=
+            draggable.mapRelativeY -=
                 this.worldMap.container.clientHeight / translateScale;
         } else {
-            this.worldMap.mapRelativeX +=
+            draggable.mapRelativeX +=
                 (this.worldMap.container.clientWidth * translateScale) / 2;
 
-            this.worldMap.mapRelativeY +=
+            draggable.mapRelativeY +=
                 (this.worldMap.container.clientHeight * translateScale) / 2;
         }
 
