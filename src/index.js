@@ -1,4 +1,5 @@
 const KeyElements = require('./key-elements');
+const OverviewElements = require('./overview-elements');
 const PointElements = require('./point-elements');
 const SearchElements = require('./search-elements');
 const ZoomElements = require('./zoom-elements');
@@ -61,13 +62,6 @@ const PLANE_IMAGE_STYLES = {
     userSelect: 'none'
 };
 
-const ZOOM_LEVELS = {
-    '-1': 0.5,
-    0: 1,
-    1: 2,
-    2: 4
-};
-
 // how often (in ms) to record the last coordinate when we move the mouse
 const DRAG_SAMPLE_THRESHOLD = 100;
 
@@ -100,16 +94,8 @@ class WorldMap {
         // taken every X ms to determine how far to fling the map
         this.lastSample = 0;
 
-        // current zoom level (-2, 0, +2)
-        this.zoomLevel = 0;
-        this.zoomScale = 1;
-
         // prevent the user from dragging the map
         this.lockMap = false;
-
-        // used for same labels used in different locations
-        this.lastSearchChildren = new Set();
-        this.lastSearchTerms = '';
 
         this.container.tabIndex = 0;
 
@@ -177,16 +163,26 @@ class WorldMap {
     // the animation loop that moves the map to a position relative from where
     // the drag began based on current mouse position
     scrollMap() {
+        const maxX = -(
+            IMAGE_WIDTH * this.zoomElements.scale -
+            this.container.clientWidth
+        );
+
         if (this.mapRelativeX > 0) {
             this.mapRelativeX = 0;
-        } else if (this.mapRelativeX < -(IMAGE_WIDTH * this.zoomScale)) {
-            this.mapRelativeX = -(IMAGE_WIDTH * this.zoomScale);
+        } else if (this.mapRelativeX < maxX) {
+            this.mapRelativeX = maxX;
         }
+
+        const maxY = -(
+            IMAGE_HEIGHT * this.zoomElements.scale -
+            this.container.clientHeight
+        );
 
         if (this.mapRelativeY > 0) {
             this.mapRelativeY = 0;
-        } else if (this.mapRelativeY < -(IMAGE_HEIGHT * this.zoomScale)) {
-            this.mapRelativeY = -(IMAGE_HEIGHT * this.zoomScale);
+        } else if (this.mapRelativeY < maxY) {
+            this.mapRelativeY = maxY;
         }
 
         const x = `${Math.floor(this.mapRelativeX)}px`;
@@ -348,134 +344,6 @@ class WorldMap {
         this.planeWrap.appendChild(this.objectCanvas);
     }
 
-    zoom(zoomLevel) {
-        const scale = ZOOM_LEVELS[zoomLevel];
-        const transform = `scale(${scale})`;
-
-        this.planeWrap.style.transition = '';
-
-        // scale the entire map image, but not the points or text labels:
-        this.planeImage.style.transform = transform;
-        this.objectCanvas.style.transform = transform;
-
-        // move text labels and points to match up with the new zoomed-in image:
-        const translateScale = scale / this.zoomScale;
-
-        this.mapRelativeX *= translateScale;
-        this.mapRelativeY *= translateScale;
-
-        if (zoomLevel > this.zoomLevel) {
-            this.mapRelativeX -= this.container.clientWidth / translateScale;
-            this.mapRelativeY -= this.container.clientHeight / translateScale;
-        } else {
-            this.mapRelativeX +=
-                (this.container.clientWidth * translateScale) / 2;
-
-            this.mapRelativeY +=
-                (this.container.clientHeight * translateScale) / 2;
-        }
-
-        for (const child of this.planeWrap.children) {
-            if (child.tagName === 'IMG' || child.tagName === 'CANVAS') {
-                continue;
-            }
-
-            const x = Number(child.dataset.x);
-            const y = Number(child.dataset.y);
-
-            child.style.left = `${x * scale}px`;
-            child.style.top = `${y * scale}px`;
-            child.style.margin = '';
-            child.style.transform = '';
-
-            if (child.tagName === 'SPAN') {
-                child.style.width = 'auto';
-            }
-
-            if (zoomLevel === -1) {
-                child.style.transform = transform;
-            } else if (zoomLevel === 1 || zoomLevel === 2) {
-                let offsetX = 0;
-                let offsetY = 0;
-
-                if (child.tagName === 'SPAN') {
-                    const { width, height } = child.getBoundingClientRect();
-
-                    if (child.style.textAlign === 'center') {
-                        offsetX = zoomLevel === 1 ? width / 2 : width * 1.5;
-                    }
-
-                    offsetY = zoomLevel === 1 ? height / 2 : height * 1.5;
-                } else if (child.tagName === 'DIV') {
-                    offsetX += zoomLevel === 1 ? 7.5 : 22.5;
-                    offsetY += zoomLevel === 1 ? 7.5 : 22.5;
-                }
-
-                child.style.margin = `${offsetY}px 0 0 ${offsetX}px`;
-            }
-        }
-
-        this.zoomLevel = zoomLevel;
-        this.zoomScale = scale;
-    }
-
-    // navigate to the specified label
-    search(terms) {
-        if (terms !== this.lastSearchTerms) {
-            this.lastSearchChildren.clear();
-        }
-
-        this.lastSearchTerms = terms;
-
-        for (const child of this.planeWrap.children) {
-            if (
-                this.lastSearchChildren.has(child) ||
-                child.tagName !== 'SPAN'
-            ) {
-                continue;
-            }
-
-            const label = child.innerText;
-
-            if (new RegExp(terms, 'i').test(label.replace(/\s/g, ' '))) {
-                this.lastSearchChildren.add(child);
-
-                this.lockMap = true;
-                this.searchElements.elements.searchInput.disabled = true;
-                this.searchElements.elements.next.disabled = true;
-                this.planeWrap.style.transition = 'transform 0.5s ease-in';
-
-                this.mapRelativeX =
-                    this.zoomScale * -Number(child.dataset.x) +
-                    this.container.clientWidth / 2 -
-                    child.clientWidth / 2 -
-                    (Number.parseFloat(child.style.marginLeft) || 0);
-
-                this.mapRelativeY =
-                    this.zoomScale * -Number(child.dataset.y) +
-                    (this.container.clientHeight / 2) -
-                    child.clientHeight / 2 -
-                    (Number.parseFloat(child.style.marginTop) || 0);
-
-                this.scrollMap();
-
-                setTimeout(() => {
-                    this.lockMap = false;
-                    this.searchElements.elements.searchInput.disabled = false;
-                    this.searchElements.elements.next.disabled = false;
-                    this.planeWrap.style.transition = '';
-                }, 500);
-
-                return;
-            }
-        }
-
-        if (this.lastSearchChildren.size) {
-            this.lastSearchChildren.clear();
-            return this.search(terms);
-        }
-    }
-
     async init() {
         await this.loadImages();
 
@@ -501,6 +369,9 @@ class WorldMap {
 
         this.searchElements = new SearchElements(this);
         this.searchElements.init();
+
+        this.overviewElements = new OverviewElements(this);
+        this.overviewElements.init();
 
         this.attachHandlers();
         this.scrollMap();

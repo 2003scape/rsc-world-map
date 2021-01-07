@@ -1,22 +1,19 @@
 const PointElements = require('./point-elements');
+const { getBox } = require('./box-element');
 const { getButton } = require('./button-element');
 
+const BUTTON_STYLES = {
+    width: '43px',
+    top: '16px',
+    right: '16px'
+};
+
 const BOX_STYLES = {
-    backgroundColor: '#000',
-    border: '2px solid #fff',
-    boxSizing: 'border-box',
-    boxShadow: '4px 4px 8px #222',
-    outline: '2px solid #000',
     width: '50%',
     height: '80%',
-    position: 'absolute',
     top: '10%',
     left: '25%',
-    display: 'none',
-    overflowY: 'scroll',
-    padding: '4px',
-    fontSize: '13px',
-    zIndex: 1
+    overflowY: 'scroll'
 };
 
 const LIST_STYLES = { padding: 0, margin: 0 };
@@ -59,14 +56,11 @@ class KeyElements {
         // the "Key" button in the top right corner, used to toggle the
         // following box
         const button = getButton('Key', 'Toggle key points of interest.');
-        button.style.width = '43px';
-        button.style.top = '16px';
-        button.style.right = '16px';
+        Object.assign(BUTTON_STYLES, button);
 
         // bordered black box wrapping the options and toggles
-        const box = document.createElement('div');
+        const box = getBox();
         Object.assign(box.style, BOX_STYLES);
-        box.tabIndex = 0;
 
         // toggle the text labels
         box.appendChild(this.getHeader('Display'));
