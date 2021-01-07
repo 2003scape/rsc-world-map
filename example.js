@@ -8,7 +8,7 @@ container.style.border = '1px solid #000';
 const worldMap = new WorldMap({ container });
 
 worldMap.init().then(() => {
-    console.log('hi');
+    console.log('loaded');
 });
 
 document.body.style.background = '#000';

@@ -225,6 +225,7 @@ class KeyElements {
                 const { box, button } = this.elements;
 
                 this.open = !this.open;
+                this.lockMap = this.open;
 
                 box.style.display = this.open ? 'block' : 'none';
                 button.style.opacity = this.open ? 1 : 0.6;

@@ -1,5 +1,4 @@
 const { getButton } = require('./button-element');
-
 const INPUT_STYLES = {
     width: 'calc(100% - 174px)',
     boxSizing: 'border-box',
@@ -27,6 +26,7 @@ const NEXT_STYLES = {
 class SearchElements {
     constructor(worldMap) {
         this.worldMap = worldMap;
+
         this.container = this.worldMap.container;
 
         const textLabels = Array.from(
@@ -43,26 +43,37 @@ class SearchElements {
             labelList.appendChild(new Option(label));
         }
 
-        const input = document.createElement('input');
+        const searchInput = document.createElement('input');
 
-        input.type = 'search';
-        input.placeholder = 'Enter a location...';
+        searchInput.type = 'search';
+        searchInput.placeholder = 'Enter a location...';
 
-        input.setAttribute('list', labelList.id);
-        Object.assign(input.style, INPUT_STYLES);
+        searchInput.setAttribute('list', labelList.id);
+        Object.assign(searchInput.style, INPUT_STYLES);
 
-        input.addEventListener(
+        searchInput.addEventListener(
             'focus',
             () => {
-                input.style.opacity = 1;
+                searchInput.style.opacity = 1;
             },
             false
         );
 
-        input.addEventListener(
+        searchInput.addEventListener(
             'blur',
             () => {
-                input.style.opacity = 0.6;
+                searchInput.style.opacity = 0.6;
+            },
+            false
+        );
+
+        searchInput.addEventListener(
+            'keyup',
+            (event) => {
+                if (event.code === 'Enter') {
+                    this.worldMap.search(searchInput.value);
+                    this.container.focus();
+                }
             },
             false
         );
@@ -70,12 +81,21 @@ class SearchElements {
         const next = getButton('Go', 'Scroll to the specified location.');
         Object.assign(next.style, NEXT_STYLES);
 
-        this.elements = { labelList, input, next };
+        next.addEventListener(
+            'click',
+            () => {
+                this.worldMap.search(searchInput.value);
+                this.container.focus();
+            },
+            false
+        );
+
+        this.elements = { labelList, searchInput, next };
     }
 
     init() {
         this.container.appendChild(this.elements.labelList);
-        this.container.appendChild(this.elements.input);
+        this.container.appendChild(this.elements.searchInput);
         this.container.appendChild(this.elements.next);
     }
 }

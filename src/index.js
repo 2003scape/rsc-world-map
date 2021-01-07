@@ -6,6 +6,7 @@ const defaultLabels = require('../res/labels');
 const defaultObjects = require('../res/objects');
 const defaultPoints = require('../res/points');
 const fs = require('fs');
+const { getObjectImage } = require('./object-image');
 
 const PLANE_IMAGES = [
     fs.readFileSync('./res/plane-0.png'),
@@ -21,6 +22,9 @@ const MIN_REGION_X = 48;
 const MIN_REGION_Y = 37;
 const SECTOR_SIZE = 48;
 const TILE_SIZE = 3;
+
+const LABEL_OFFSET_X = MIN_REGION_X * SECTOR_SIZE * TILE_SIZE;
+const LABEL_OFFSET_Y = MIN_REGION_Y * SECTOR_SIZE * TILE_SIZE;
 
 const CONTAINER_STYLES = {
     backgroundColor: '#24407f',
@@ -50,21 +54,12 @@ const OBJECT_CANVAS_STYLES = {
     imageRendering: '-moz-crisp-edges'
 };
 
-// the orange + symbol colour used to indicate game objects
-const OBJECT_COLOUR = 'rgb(175, 95, 0)';
-
-// only regular/evergreen trees outside of the wild are this colour
-const TREE_COLOUR = 'rgb(0, 160, 0)';
-
-// objects like dead trees and fungus are darker than rocks/signs in the wild
-const WILD_TREE_COLOUR = 'rgb(112, 64, 0)';
-
-// objects in the wild intended to be WILD_TREE_COLOUR
-const WILD_SCENERY = new Set([4, 38, 70, 205]);
-
-const OBJECT_IMAGE = makeObjectImage(OBJECT_COLOUR);
-const TREE_IMAGE = makeObjectImage(TREE_COLOUR);
-const WILD_TREE_IMAGE = makeObjectImage(WILD_TREE_COLOUR);
+const PLANE_IMAGE_STYLES = {
+    transformOrigin: '0 0',
+    imageRendering: '-moz-crisp-edges',
+    pointerEvents: 'none',
+    userSelect: 'none'
+};
 
 const ZOOM_LEVELS = {
     '-1': 0.5,
@@ -73,26 +68,8 @@ const ZOOM_LEVELS = {
     2: 4
 };
 
-// used to colour objects/trees within the wilderness
-function inWilderness(x, y) {
-    return x >= 1440 && x <= 2304 && y >= 286 && y <= 1286;
-}
-
-// create the + symbols for entities
-function makeObjectImage(colour) {
-    const canvas = document.createElement('canvas');
-
-    canvas.width = 3;
-    canvas.height = 3;
-
-    const ctx = canvas.getContext('2d');
-
-    ctx.fillStyle = colour;
-    ctx.fillRect(1, 0, 1, 3);
-    ctx.fillRect(0, 1, 3, 1);
-
-    return canvas;
-}
+// how often (in ms) to record the last coordinate when we move the mouse
+const DRAG_SAMPLE_THRESHOLD = 100;
 
 class WorldMap {
     constructor({ container, labels, points, objects }) {
@@ -104,8 +81,8 @@ class WorldMap {
         this.mouseDown = false;
 
         // the top and left px of the planewrap element
-        this.mapRelativeX = -1932;
-        this.mapRelativeY = -1816;
+        this.mapRelativeX = -1908;
+        this.mapRelativeY = -1822;
 
         // the mapRelative positions when we first click
         this.startMapY = -1;
@@ -126,6 +103,8 @@ class WorldMap {
         // current zoom level (-2, 0, +2)
         this.zoomLevel = 0;
         this.zoomScale = 1;
+
+        this.lockMap = false;
 
         this.container.tabIndex = 0;
 
@@ -158,10 +137,7 @@ class WorldMap {
                     'base64'
                 )}`;
 
-                imageEl.style.transformOrigin = '0 0';
-                imageEl.style.imageRendering = '-moz-crisp-edges';
-                imageEl.style.pointerEvents = 'none';
-                imageEl.style.userSelect = 'none';
+                Object.assign(imageEl.style, PLANE_IMAGE_STYLES);
 
                 return imageEl;
             });
@@ -185,13 +161,16 @@ class WorldMap {
         );
     }
 
-    getScrollDelta(distance) {
+    // get the last direction we dragged to fling the map in
+    getScrollDirection(distance) {
         const deltaX = (this.startMapX - this.mapRelativeX) / distance;
         const deltaY = (this.startMapY - this.mapRelativeY) / distance;
 
         return { deltaX, deltaY };
     }
 
+    // the animation loop that moves the map to a position relative from where
+    // the drag began based on current mouse position
     scrollMap() {
         if (this.mapRelativeX > 0) {
             this.mapRelativeX = 0;
@@ -210,7 +189,7 @@ class WorldMap {
 
         this.planeWrap.style.transform = `translate(${x}, ${y})`;
 
-        if (Date.now() - this.lastSample >= 100) {
+        if (Date.now() - this.lastSample >= DRAG_SAMPLE_THRESHOLD) {
             this.dragMapX = this.mapRelativeX;
             this.dragMapY = this.mapRelativeY;
             this.lastSample = Date.now();
@@ -225,16 +204,16 @@ class WorldMap {
 
     attachHandlers() {
         const mouseDown = (event) => {
-            if (this.mouseDown || this.keyElements.open || event.button === 2) {
+            if (this.lockMap || this.mouseDown || event.button === 2) {
                 return;
             }
 
             if (this.transitionTimeout) {
+                this.planeWrap.style.transition = '';
                 clearTimeout(this.transitionTimeout);
             }
 
             this.container.style.cursor = 'grabbing';
-            this.planeWrap.style.transition = '';
 
             this.mouseDown = true;
             this.startMapX = this.mapRelativeX;
@@ -253,7 +232,7 @@ class WorldMap {
         this.container.addEventListener('touchstart', mouseDown, false);
 
         const mouseUp = () => {
-            if (!this.mouseDown) {
+            if (!this.mouseDown || this.lockMap) {
                 return;
             }
 
@@ -264,9 +243,10 @@ class WorldMap {
             const distance = this.getDragDistance();
 
             if (distance) {
-                const { deltaX, deltaY } = this.getScrollDelta(distance);
+                const { deltaX, deltaY } = this.getScrollDirection(distance);
                 const delay = Math.floor(200 + distance * 1.25);
 
+                // https://easings.net/#easeOutSine
                 this.planeWrap.style.transition =
                     `transform 0.${delay}s ` + 'cubic-bezier(0.61, 1, 0.88, 1)';
 
@@ -287,7 +267,7 @@ class WorldMap {
         window.addEventListener('touchend', mouseUp, false);
 
         const mouseMove = (event) => {
-            if (!this.mouseDown || this.keyElements.open) {
+            if (!this.mouseDown || this.lockMap) {
                 return;
             }
 
@@ -305,8 +285,8 @@ class WorldMap {
         for (const label of this.labels) {
             let [x, y] = [label.x, label.y];
 
-            x -= MIN_REGION_X * SECTOR_SIZE * TILE_SIZE;
-            y -= MIN_REGION_Y * SECTOR_SIZE * TILE_SIZE;
+            x -= LABEL_OFFSET_X;
+            y -= LABEL_OFFSET_Y;
 
             const labelEl = document.createElement('span');
 
@@ -332,8 +312,8 @@ class WorldMap {
 
     addPoints() {
         for (let { type, x, y } of this.points) {
-            x -= MIN_REGION_X * SECTOR_SIZE * TILE_SIZE;
-            y -= MIN_REGION_Y * SECTOR_SIZE * TILE_SIZE;
+            x -= LABEL_OFFSET_X;
+            y -= LABEL_OFFSET_Y;
 
             this.planeWrap.appendChild(this.pointElements.getPoint(type, x, y));
         }
@@ -355,15 +335,7 @@ class WorldMap {
             y *= TILE_SIZE;
             y -= 1;
 
-            let image = OBJECT_IMAGE;
-
-            if (inWilderness(x, y)) {
-                if (WILD_SCENERY.has(id)) {
-                    image = WILD_TREE_IMAGE;
-                }
-            } else if (id === 1) {
-                image = TREE_IMAGE;
-            }
+            const image = getObjectImage(id, x, y);
 
             ctx.drawImage(image, x, y);
         }
@@ -442,17 +414,53 @@ class WorldMap {
         this.zoomScale = scale;
     }
 
+    // navigate to the specified label
+    search(terms) {
+        for (const child of this.planeWrap.children) {
+            if (child.tagName !== 'SPAN') {
+                continue;
+            }
+
+            const label = child.innerText;
+
+            if (new RegExp(terms, 'i').test(label.replace(/\s/g, ' '))) {
+                this.searchElements.elements.searchInput.disabled = true;
+                this.lockMap = true;
+                this.planeWrap.style.transition = 'transform 0.5s ease-in';
+
+                this.mapRelativeX =
+                    -Number(child.dataset.x) +
+                    this.container.clientWidth / 2 -
+                    child.clientWidth / 4;
+
+                this.mapRelativeY =
+                    -Number(child.dataset.y) +
+                    this.container.clientHeight / 2 -
+                    child.clientHeight / 2;
+
+                this.scrollMap();
+
+                setTimeout(() => {
+                    this.lockMap = false;
+                    this.searchElements.elements.searchInput.disabled = false;
+                    this.planeWrap.style.transition = '';
+                }, 500);
+                break;
+            }
+        }
+    }
+
     async init() {
         await this.loadImages();
 
         this.pointElements = new PointElements();
-
         await this.pointElements.init();
 
-        this.planeWrap.innerHTML = '';
         this.planeImage = this.planeImages[0];
 
+        this.planeWrap.innerHTML = '';
         this.planeWrap.appendChild(this.planeImage);
+
         this.addObjects();
         this.addPoints();
         this.addLabels();
