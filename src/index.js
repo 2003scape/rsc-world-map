@@ -1,3 +1,4 @@
+const Draggable  = require('./draggable');
 const KeyElements = require('./key-elements');
 const OverviewElements = require('./overview-elements');
 const PointElements = require('./point-elements');
@@ -8,7 +9,6 @@ const defaultObjects = require('../res/objects');
 const defaultPoints = require('../res/points');
 const fs = require('fs');
 const { getObjectImage } = require('./object-image');
-const { useDraggable } = require('./draggable');
 
 const PLANE_IMAGES = [
     fs.readFileSync('./res/plane-0.png'),
@@ -83,8 +83,8 @@ class WorldMap {
         this.planeWrap = document.createElement('div');
         Object.assign(this.planeWrap.style, PLANE_WRAP_STYLES);
 
-        this.draggable = useDraggable(this.container, this.planeWrap);
-        this.scrollMap = this.draggable.scrollMap;
+        this.draggable = new Draggable(this.container, this.planeWrap);
+        this.scrollMap = this.draggable.scrollMap.bind(this.draggable);
     }
 
     loadImages() {
