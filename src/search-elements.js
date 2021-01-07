@@ -72,6 +72,7 @@ class SearchElements {
             (event) => {
                 if (event.code === 'Enter') {
                     this.worldMap.search(searchInput.value);
+                    searchInput.style.opacity = 0.6;
                     this.container.focus();
                 }
             },

@@ -104,7 +104,12 @@ class WorldMap {
         this.zoomLevel = 0;
         this.zoomScale = 1;
 
+        // prevent the user from dragging the map
         this.lockMap = false;
+
+        // used for same labels used in different locations
+        this.lastSearchChildren = new Set();
+        this.lastSearchTerms = '';
 
         this.container.tabIndex = 0;
 
@@ -416,37 +421,59 @@ class WorldMap {
 
     // navigate to the specified label
     search(terms) {
+        if (terms !== this.lastSearchTerms) {
+            this.lastSearchChildren.clear();
+        }
+
+        this.lastSearchTerms = terms;
+
         for (const child of this.planeWrap.children) {
-            if (child.tagName !== 'SPAN') {
+            if (
+                this.lastSearchChildren.has(child) ||
+                child.tagName !== 'SPAN'
+            ) {
                 continue;
             }
 
             const label = child.innerText;
 
             if (new RegExp(terms, 'i').test(label.replace(/\s/g, ' '))) {
-                this.searchElements.elements.searchInput.disabled = true;
+                this.lastSearchChildren.add(child);
+
                 this.lockMap = true;
+                this.searchElements.elements.searchInput.disabled = true;
+                this.searchElements.elements.next.disabled = true;
                 this.planeWrap.style.transition = 'transform 0.5s ease-in';
 
                 this.mapRelativeX =
-                    -Number(child.dataset.x) +
+                    this.zoomScale * -Number(child.dataset.x) +
                     this.container.clientWidth / 2 -
-                    child.clientWidth / 4;
+                    (child.clientWidth * this.zoomScale) / 4 -
+                    ((Number(child.style.marginLeft.slice(0, -2)) || 0) / 2);
 
                 this.mapRelativeY =
-                    -Number(child.dataset.y) +
+                    this.zoomScale * -Number(child.dataset.y) +
                     this.container.clientHeight / 2 -
-                    child.clientHeight / 2;
+                    (child.clientHeight * this.zoomScale) / 2 +
+                    ((Number(child.style.marginTop.slice(0, -2)) || 0) / 2);
+
 
                 this.scrollMap();
 
                 setTimeout(() => {
                     this.lockMap = false;
                     this.searchElements.elements.searchInput.disabled = false;
+                    this.searchElements.elements.next.disabled = false;
                     this.planeWrap.style.transition = '';
                 }, 500);
-                break;
+
+                return;
             }
+        }
+
+        if (this.lastSearchChildren.size) {
+            this.lastSearchChildren.clear();
+            return this.search(terms);
         }
     }
 

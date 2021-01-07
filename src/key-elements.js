@@ -43,9 +43,10 @@ const HEADER_STYLES = {
 
 class KeyElements {
     constructor(worldMap) {
-        this.container = worldMap.container;
-        this.planeWrap = worldMap.planeWrap;
-        this.objectCanvas = worldMap.objectCanvas;
+        this.worldMap = worldMap;
+        this.container = this.worldMap.container;
+        this.planeWrap = this.worldMap.planeWrap;
+        this.objectCanvas = this.worldMap.objectCanvas;
 
         this.open = false;
 
@@ -129,7 +130,7 @@ class KeyElements {
             'click',
             () => {
                 for (const type of Object.keys(
-                    worldMap.pointElements.elements
+                    this.worldMap.pointElements.elements
                 )) {
                     const toggled = !!toggleAll.checked;
 
@@ -153,7 +154,7 @@ class KeyElements {
         listEl.appendChild(pointLabel);
         keyList.appendChild(listEl);
 
-        for (const type of Object.keys(worldMap.pointElements.elements)) {
+        for (const type of Object.keys(this.worldMap.pointElements.elements)) {
             this.toggledPoints[type] = true;
 
             const id = `toggle-${type}`;
@@ -178,7 +179,7 @@ class KeyElements {
 
             pointLabel.appendChild(checkboxEl);
 
-            const pointImage = worldMap.pointElements.getPoint(type);
+            const pointImage = this.worldMap.pointElements.getPoint(type);
             Object.assign(pointImage.style, POINT_IMAGE_STYLES);
 
             pointLabel.htmlFor = id;
@@ -225,7 +226,7 @@ class KeyElements {
                 const { box, button } = this.elements;
 
                 this.open = !this.open;
-                this.lockMap = this.open;
+                this.worldMap.lockMap = this.open;
 
                 box.style.display = this.open ? 'block' : 'none';
                 button.style.opacity = this.open ? 1 : 0.6;
