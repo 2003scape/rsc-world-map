@@ -49,6 +49,9 @@ class OverviewElements {
         this.open = false;
         this.isMouseDown = false;
 
+        this.mouseX = 0;
+        this.mouseY = 0;
+
         const button = getButton('Overview', 'Show the minimap overview.');
         Object.assign(button.style, BUTTON_STYLES);
         button.addEventListener('click', () => this.toggle(), false);
@@ -70,6 +73,9 @@ class OverviewElements {
                 return;
             }
 
+            const containerWidth = this.worldMap.container.clientWidth;
+            const containerHeight = this.worldMap.container.clientHeight;
+
             const minimapWidth = this.elements.minimap.clientWidth;
             const minimapHeight = this.elements.minimap.clientHeight;
 
@@ -78,14 +84,19 @@ class OverviewElements {
 
             const { x, y } = getMousePosition(minimap, event);
 
+            this.mouseX = Math.min(Math.max(x, 0), minimapWidth);
+            this.mouseY = Math.min(Math.max(y, 0), minimapHeight);
+
             this.worldMap.draggable.mapRelativeX = -(
                 (x / minimapWidth) *
-                imageWidth
+                imageWidth -
+                containerWidth / 2
             );
 
             this.worldMap.draggable.mapRelativeY = -(
                 (y / minimapHeight) *
-                imageHeight
+                imageHeight -
+                containerHeight / 2
             );
         });
 
@@ -109,7 +120,11 @@ class OverviewElements {
 
     toggle() {
         this.open = !this.open;
-        this.worldMap.draggable.lock = this.open;
+
+        if (!this.worldMap.keyElements.open) {
+            this.worldMap.draggable.lock = this.open;
+            this.container.style.cursor = this.open ? 'inherit' : 'grab';
+        }
 
         this.elements.box.style.display = this.open ? 'block' : 'none';
 
@@ -118,6 +133,10 @@ class OverviewElements {
             fontWeight: this.open ? 'bold' : 'inherit'
         });
 
+        this.refreshSelection();
+    }
+
+    refreshSelection() {
         const containerWidth = this.worldMap.container.clientWidth;
         const containerHeight = this.worldMap.container.clientHeight;
 
@@ -130,34 +149,36 @@ class OverviewElements {
         const selectionWidth = minimapWidth * (containerWidth / imageWidth);
         const selectionHeight = minimapHeight * (containerHeight / imageHeight);
 
+        const offsetX =
+            Math.abs(
+                (minimapWidth * this.worldMap.draggable.mapRelativeX) /
+                    imageWidth
+            ) -
+            selectionWidth / 2;
+
+        const offsetY =
+            Math.abs(
+                (minimapHeight * this.worldMap.draggable.mapRelativeY) /
+                    imageHeight
+            ) -
+            selectionHeight / 2;
+
         Object.assign(this.elements.selection.style, {
             width: `${selectionWidth}px`,
             height: `${selectionHeight}px`,
-            transformOrigin: '0 0'
+            transformOrigin: '0 0',
+            transform: `translate(${offsetX}px, ${offsetY}px)`
         });
-
-        this.container.style.cursor = this.open ? 'inherit' : 'grab';
     }
 
     scrollMap() {
         this.worldMap.scrollMap();
 
-        const imageWidth = this.worldMap.planeWrap.clientWidth;
-        const imageHeight = this.worldMap.planeWrap.clientHeight;
-
-        const minimapWidth = this.elements.minimap.clientWidth;
-        const minimapHeight = this.elements.minimap.clientHeight;
-
         const selectionWidth = this.elements.selection.clientWidth;
         const selectionHeight = this.elements.selection.clientHeight;
 
-        const offsetX = Math.abs(
-            (minimapWidth * this.worldMap.draggable.mapRelativeX) / imageWidth
-        )/* - (selectionWidth / 2)*/;
-
-        const offsetY = Math.abs(
-            (minimapHeight * this.worldMap.draggable.mapRelativeY) / imageHeight
-        ) /*- (selectionHeight / 2)*/;
+        const offsetX = Math.abs(this.mouseX) - selectionWidth / 2;
+        const offsetY = Math.abs(this.mouseY) - selectionHeight / 2;
 
         this.elements.selection.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
 

@@ -1,7 +1,7 @@
 const { getButton } = require('./button-element');
 
 const INPUT_STYLES = {
-    width: 'calc(100% - 174px)',
+    width: 'calc(100% - 184px)',
     boxSizing: 'border-box',
     height: '28px',
     position: 'absolute',
@@ -19,7 +19,7 @@ const INPUT_STYLES = {
 
 const NEXT_STYLES = {
     bottom: '20px',
-    right: '110px',
+    right: '120px',
     width: '32px',
     height: '28px'
 };
@@ -148,9 +148,16 @@ class SearchElements {
                     (Number.parseFloat(child.style.marginTop) || 0);
 
                 this.worldMap.scrollMap();
+                this.worldMap.overviewElements.refreshSelection();
 
                 setTimeout(() => {
-                    this.worldMap.lockMap = false;
+                    if (
+                        !this.worldMap.overviewElements.open &&
+                        !this.worldMap.overviewElements.open
+                    ) {
+                        this.worldMap.lockMap = false;
+                    }
+
                     this.elements.searchInput.disabled = false;
                     this.elements.next.disabled = false;
                     this.worldMap.planeWrap.style.transition = '';

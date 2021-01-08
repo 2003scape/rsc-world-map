@@ -116,11 +116,12 @@ class ZoomElements {
 
             if (child.tagName === 'SPAN') {
                 child.style.width = 'auto';
+                child.style.textShadow = '1px 1px #000';
             }
 
             if (zoomLevel === -1) {
                 child.style.transform = transform;
-                //child.style.textShadow = '';
+                child.style.textShadow = '';
             } else if (zoomLevel === 1 || zoomLevel === 2) {
                 let offsetX = 0;
                 let offsetY = 0;
@@ -144,6 +145,11 @@ class ZoomElements {
 
         this.level = zoomLevel;
         this.scale = scale;
+
+        this.worldMap.scrollMap();
+
+        this.worldMap.overviewElements.refreshSelection();
+        this.worldMap.overviewElements.scrollMap();
     }
 
     init() {

@@ -13,7 +13,8 @@ const BOX_STYLES = {
     height: '80%',
     top: '10%',
     left: '25%',
-    overflowY: 'scroll'
+    overflowY: 'scroll',
+    zIndex: 2
 };
 
 const LIST_STYLES = { padding: 0, margin: 0 };
@@ -62,12 +63,18 @@ class KeyElements {
             'click',
             () => {
                 this.open = !this.open;
-                this.worldMap.draggable.lock = this.open;
+
+                if (!this.worldMap.overviewElements.open) {
+                    this.worldMap.draggable.lock = this.open;
+
+                    this.container.style.cursor = this.open
+                        ? 'inherit'
+                        : 'grab';
+                }
 
                 box.style.display = this.open ? 'block' : 'none';
                 button.style.opacity = this.open ? 1 : 0.6;
                 button.style.fontWeight = this.open ? 'bold' : 'inherit';
-                this.container.style.cursor = this.open ? 'inherit' : 'grab';
             },
             false
         );

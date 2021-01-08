@@ -132,7 +132,7 @@
         "x": 7631,
         "y": 6801,
         "size": 10,
-        "align": "left"
+        "align": "center"
     },
     {
         "text": "Kingdom of\nKandarin",
@@ -316,7 +316,7 @@
         "x": 8224,
         "y": 6821,
         "size": 10,
-        "align": "left"
+        "align": "center"
     },
     {
         "text": "Dark Wizards\nTower",
