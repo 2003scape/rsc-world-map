@@ -1,3 +1,11 @@
+const CONTAINER_STYLES = {
+    backgroundColor: '#24407f',
+    position: 'relative',
+    overflow: 'hidden',
+    userSelect: 'none',
+    cursor: 'grab'
+};
+
 // how often (in ms) to record the last coordinate when we move the mouse
 const DRAG_SAMPLE_THRESHOLD = 100;
 
@@ -43,6 +51,8 @@ class Draggable {
 
         this._scrollMap = this.scrollMap.bind(this);
 
+        Object.assign(this.container.style, CONTAINER_STYLES);
+
         const mouseDown = (event) => {
             if (this.lock || this.isMouseDown || event.button === 2) {
                 return;
@@ -72,7 +82,7 @@ class Draggable {
         this.container.addEventListener('touchstart', mouseDown, false);
 
         const mouseUp = () => {
-            if (!this.isMouseDown || this.lockMap) {
+            if (!this.isMouseDown || this.lock) {
                 return;
             }
 
@@ -106,7 +116,7 @@ class Draggable {
         window.addEventListener('touchend', mouseUp, false);
 
         const mouseMove = () => {
-            if (!this.isMouseDown || this.lockMap) {
+            if (!this.isMouseDown || this.lock) {
                 return;
             }
 

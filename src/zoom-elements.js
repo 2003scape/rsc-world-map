@@ -120,6 +120,7 @@ class ZoomElements {
 
             if (zoomLevel === -1) {
                 child.style.transform = transform;
+                //child.style.textShadow = '';
             } else if (zoomLevel === 1 || zoomLevel === 2) {
                 let offsetX = 0;
                 let offsetY = 0;

@@ -58,6 +58,20 @@ class KeyElements {
         const button = getButton('Key', 'Toggle key points of interest.');
         Object.assign(button.style, BUTTON_STYLES);
 
+        button.addEventListener(
+            'click',
+            () => {
+                this.open = !this.open;
+                this.worldMap.draggable.lock = this.open;
+
+                box.style.display = this.open ? 'block' : 'none';
+                button.style.opacity = this.open ? 1 : 0.6;
+                button.style.fontWeight = this.open ? 'bold' : 'inherit';
+                this.container.style.cursor = this.open ? 'inherit' : 'grab';
+            },
+            false
+        );
+
         // bordered black box wrapping the options and toggles
         const box = getBox();
         Object.assign(box.style, BOX_STYLES);
@@ -213,24 +227,6 @@ class KeyElements {
         return labelEl;
     }
 
-    attachHandlers() {
-        this.elements.button.addEventListener(
-            'click',
-            () => {
-                const { box, button } = this.elements;
-
-                this.open = !this.open;
-                this.worldMap.lockMap = this.open;
-
-                box.style.display = this.open ? 'block' : 'none';
-                button.style.opacity = this.open ? 1 : 0.6;
-                button.style.fontWeight = this.open ? 'bold' : 'inherit';
-                this.container.style.cursor = this.open ? 'inherit' : 'grab';
-            },
-            false
-        );
-    }
-
     refreshPoints() {
         let allToggled = true;
 
@@ -263,8 +259,6 @@ class KeyElements {
     }
 
     init() {
-        this.attachHandlers();
-
         this.container.appendChild(this.elements.button);
         this.container.appendChild(this.elements.box);
     }

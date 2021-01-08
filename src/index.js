@@ -29,12 +29,7 @@ const LABEL_OFFSET_X = MIN_REGION_X * SECTOR_SIZE * TILE_SIZE;
 const LABEL_OFFSET_Y = MIN_REGION_Y * SECTOR_SIZE * TILE_SIZE;
 
 const CONTAINER_STYLES = {
-    backgroundColor: '#24407f',
     color: '#fff',
-    position: 'relative',
-    overflow: 'hidden',
-    userSelect: 'none',
-    cursor: 'grab',
     fontFamily: 'arial, sans-serif'
 };
 
@@ -129,16 +124,14 @@ class WorldMap {
 
             labelEl.innerText = label.text;
 
-            const styles = {
+            Object.assign(labelEl.style, LABEL_STYLES, {
                 color: label.colour || '#fff',
                 textAlign: label.align || 'left',
                 fontSize: `${label.size + 2}px`,
                 fontWeight: label.bold ? 'bold' : 'normal',
                 top: `${y}px`,
                 left: `${x}px`
-            };
-
-            Object.assign(labelEl.style, Object.assign(styles, LABEL_STYLES));
+            });
 
             this.planeWrap.appendChild(labelEl);
         }
