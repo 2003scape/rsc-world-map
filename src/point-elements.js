@@ -138,16 +138,29 @@ class PointElements {
         return pointEl;
     }
 
-    async init() {
-        await this.loadImages();
-        this.generatePoints();
-
+    addPoints() {
         for (let { type, x, y } of this.points) {
+            if (
+                Math.floor(y / this.worldMap.imageHeight) !==
+                this.worldMap.currentPlane
+            ) {
+                continue;
+            }
+
+            y %= this.worldMap.imageHeight;
+
             this.planeWrap.appendChild(this.getPoint(type, x, y));
         }
     }
 
+    async init() {
+        await this.loadImages();
+        this.generatePoints();
+        this.addPoints();
+    }
+
     refreshPlaneLevel() {
+        this.addPoints();
     }
 
     static formatPointTitle(type) {

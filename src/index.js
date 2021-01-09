@@ -96,9 +96,22 @@ class WorldMap {
     }
 
     setPlaneLevel(level) {
+        this.currentPlane = level;
+
         this.planeImage.replaceWith(this.planeImages[level]);
         this.planeImage = this.planeImages[level];
+
+        this.entityCanvas.refreshPlaneLevel();
         this.overviewElements.refreshPlaneLevel();
+
+        for (const child of Array.from(this.planeWrap.children)) {
+            if (child.tagName === 'DIV' || child.tagName === 'SPAN') {
+                this.planeWrap.removeChild(child);
+            }
+        }
+
+        this.pointElements.refreshPlaneLevel();
+        this.labelElements.refreshPlaneLevel();
 
         if (level !== 0) {
             this.container.style.backgroundColor = '#000';

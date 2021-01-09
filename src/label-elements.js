@@ -14,9 +14,19 @@ class LabelElements {
         this.planeWrap = this.worldMap.planeWrap;
     }
 
-    init() {
+    addLabels() {
         for (const label of this.labels) {
-            const [x, y] = [label.x, label.y];
+            let [x, y] = [label.x, label.y];
+
+            if (
+                Math.floor(y / this.worldMap.imageHeight) !==
+                this.worldMap.currentPlane
+            ) {
+                continue;
+            }
+
+            y %= this.worldMap.imageHeight;
+
             const labelEl = document.createElement('span');
 
             labelEl.dataset.x = x;
@@ -37,7 +47,12 @@ class LabelElements {
         }
     }
 
+    init() {
+        this.addLabels();
+    }
+
     refreshPlaneLevel() {
+        this.addLabels();
     }
 }
 

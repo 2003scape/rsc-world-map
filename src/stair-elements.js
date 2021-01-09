@@ -25,11 +25,38 @@ class StairElements {
         Object.assign(upstairs.style, UPSTAIRS_STYLES);
 
         upstairs.addEventListener('click', () => {
-            this.worldMap.setPlaneLevel(this.worldMap.currentPlane + 1);
+            const plane = this.worldMap.currentPlane;
+
+            if (plane === 3) {
+                this.worldMap.setPlaneLevel(0);
+                enableButton(downstairs);
+            } else if (plane < 2) {
+                this.worldMap.setPlaneLevel(plane + 1);
+                enableButton(downstairs);
+            }
+
+            if (this.worldMap.currentPlane >= 2) {
+                disableButton(upstairs);
+            }
         });
 
         const downstairs = getButton('Down', 'View the downstairs map.');
         Object.assign(downstairs.style, DOWNSTAIRS_STYLES);
+
+        downstairs.addEventListener('click', () => {
+            const plane = this.worldMap.currentPlane;
+
+            if (plane === 0) {
+                this.worldMap.setPlaneLevel(3);
+            } else if (plane > 0 && plane < 3) {
+                this.worldMap.setPlaneLevel(plane - 1);
+                enableButton(upstairs);
+            }
+
+            if (this.worldMap.currentPlane >= 3) {
+                disableButton(downstairs);
+            }
+        });
 
         this.elements = { upstairs, downstairs };
     }

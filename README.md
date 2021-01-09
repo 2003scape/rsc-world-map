@@ -3,9 +3,10 @@ interactive world map for runescape classic.
 
 features:
 * mobile and tablet support with touch controls
-* works with any height x width >= 300px x 300px
+* works with any *height x width* >= `300px x 300px`
 * four levels of zoom with crisp, pixelated landscape and anti-aliased text
 * overview box for quick navigation across ends of the map
+* go up and down plane levels to view dungeons and upstairs areas
 * search box with automatic suggestions
 * toggle labels, object and points of interest
 * native javascript with zero framework dependencies, just import and specify a
