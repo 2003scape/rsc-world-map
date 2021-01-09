@@ -1,3 +1,5 @@
+// +/- buttons to zoom in and out
+
 const { getButton, enableButton, disableButton } = require('./button-element');
 
 const ZOOM_IN_STYLES = { width: '32px', bottom: '16px', right: '58px' };
@@ -13,7 +15,6 @@ const ZOOM_LEVELS = {
 class ZoomElements {
     constructor(worldMap) {
         this.worldMap = worldMap;
-
         this.container = this.worldMap.container;
 
         // current zoom level (-2, 0, +2)
@@ -71,7 +72,7 @@ class ZoomElements {
 
         // scale the entire map image, but not the points or text labels:
         this.worldMap.planeImage.style.transform = transform;
-        this.worldMap.objectCanvas.style.transform = transform;
+        this.worldMap.entityCanvas.elements.canvas.style.transform = transform;
 
         const {
             width,
@@ -149,7 +150,6 @@ class ZoomElements {
         this.worldMap.scrollMap();
 
         this.worldMap.overviewElements.refreshSelection();
-        this.worldMap.overviewElements.scrollMap();
     }
 
     init() {

@@ -1,3 +1,5 @@
+// black shadowed block div overlapping the map
+
 const BOX_STYLES = {
     backgroundColor: '#000',
     border: '2px solid #fff',

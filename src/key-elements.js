@@ -44,7 +44,7 @@ class KeyElements {
         this.worldMap = worldMap;
         this.container = this.worldMap.container;
         this.planeWrap = this.worldMap.planeWrap;
-        this.objectCanvas = this.worldMap.objectCanvas;
+        this.entityCanvas = this.worldMap.entityCanvas.elements.canvas;
 
         this.open = false;
 
@@ -116,7 +116,7 @@ class KeyElements {
             () => {
                 this.showObjects = !this.showObjects;
 
-                this.objectCanvas.style.display = this.showObjects
+                this.entityCanvas.style.display = this.showObjects
                     ? 'block'
                     : 'none';
             },

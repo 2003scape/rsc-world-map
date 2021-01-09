@@ -1,3 +1,5 @@
+// make an element flingable within a container
+
 const CONTAINER_STYLES = {
     backgroundColor: '#24407f',
     position: 'relative',

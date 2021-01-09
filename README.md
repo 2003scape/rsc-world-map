@@ -3,12 +3,14 @@ interactive world map for runescape classic.
 
 features:
 * mobile and tablet support with touch controls
+* works with any height x width >= 300px x 300px
 * four levels of zoom with crisp, pixelated landscape and anti-aliased text
+* overview box for quick navigation across ends of the map
 * search box with automatic suggestions
 * toggle labels, object and points of interest
 * native javascript with zero framework dependencies, just import and specify a
 block container element
-* no additional HTTP requests - everything packed inside the javascript
+* zero additional HTTP requests - everything packed inside the javascript
 
 ## install
 
@@ -83,6 +85,8 @@ load the images, attach the event handlers and populate the container element.
 ## static map images
 to generate a static PNG of the world map, use the CLI tool in
 [@2003scape/rsc-landscape](https://github.com/2003scape/rsc-landscape#cli-usage)
+
+you can also use this to generate the `plane-x.png` images in [`./res/`](/res/).
 
 ## license
 Copyright (C) 2021  2003Scape Team

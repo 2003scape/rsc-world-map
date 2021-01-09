@@ -49,8 +49,8 @@ class OverviewElements {
         this.open = false;
         this.isMouseDown = false;
 
-        this.mouseX = 0;
-        this.mouseY = 0;
+        this.mouseX = -1;
+        this.mouseY = -1;
 
         const button = getButton('Overview', 'Show the minimap overview.');
         Object.assign(button.style, BUTTON_STYLES);
@@ -88,14 +88,12 @@ class OverviewElements {
             this.mouseY = Math.min(Math.max(y, 0), minimapHeight);
 
             this.worldMap.draggable.mapRelativeX = -(
-                (x / minimapWidth) *
-                imageWidth -
+                (x / minimapWidth) * imageWidth -
                 containerWidth / 2
             );
 
             this.worldMap.draggable.mapRelativeY = -(
-                (y / minimapHeight) *
-                imageHeight -
+                (y / minimapHeight) * imageHeight -
                 containerHeight / 2
             );
         });
@@ -172,19 +170,26 @@ class OverviewElements {
     }
 
     scrollMap() {
-        this.worldMap.scrollMap();
+        if (this.mouseX > -1 && this.mouseY > -1) {
+            this.worldMap.scrollMap();
 
-        const selectionWidth = this.elements.selection.clientWidth;
-        const selectionHeight = this.elements.selection.clientHeight;
+            const selectionWidth = this.elements.selection.clientWidth;
+            const selectionHeight = this.elements.selection.clientHeight;
 
-        const offsetX = Math.abs(this.mouseX) - selectionWidth / 2;
-        const offsetY = Math.abs(this.mouseY) - selectionHeight / 2;
+            const offsetX = Math.abs(this.mouseX) - selectionWidth / 2;
+            const offsetY = Math.abs(this.mouseY) - selectionHeight / 2;
 
-        this.elements.selection.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+            const transform = `translate(${offsetX}px, ${offsetY}px)`;
+            this.elements.selection.style.transform = transform;
+        }
 
         if (this.isMouseDown) {
             window.requestAnimationFrame(this._scrollMap);
         }
+    }
+
+    refreshPlaneLevel() {
+        this.elements.minimap.src = this.worldMap.planeImage.src;
     }
 
     init() {

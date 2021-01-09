@@ -1,3 +1,5 @@
+// the point of interest circles
+
 const fs = require('fs');
 
 const POINT_IMAGES = {
@@ -58,7 +60,11 @@ const POINT_WRAP_STYLES = {
 };
 
 class PointElements {
-    constructor() {
+    constructor(worldMap) {
+        this.worldMap = worldMap;
+        this.points = this.worldMap.points;
+        this.planeWrap = this.worldMap.planeWrap;
+
         this.elements = {};
     }
 
@@ -104,7 +110,6 @@ class PointElements {
                 type
             ].toString('base64')}`;
 
-            //imageEl.style.imageRendering = '-moz-crisp-edges';
             imageEl.style.pointerEvents = 'none';
             imageEl.style.userSelect = 'none';
 
@@ -115,25 +120,34 @@ class PointElements {
     }
 
     getPoint(type, x, y) {
-        const el = this.elements[type].cloneNode(true);
+        const pointEl = this.elements[type].cloneNode(true);
 
-        el.dataset.pointType = type;
+        pointEl.dataset.pointType = type;
 
         if (typeof x == 'number') {
-            el.dataset.x = x;
-            el.dataset.y = y;
+            pointEl.dataset.x = x;
+            pointEl.dataset.y = y;
 
-            el.style.position = 'absolute';
-            el.style.top = `${y}px`;
-            el.style.left = `${x}px`;
+            Object.assign(pointEl.style, {
+                position: 'absolute',
+                top: `${y}px`,
+                left: `${x}px`
+            });
         }
 
-        return el;
+        return pointEl;
     }
 
     async init() {
         await this.loadImages();
         this.generatePoints();
+
+        for (let { type, x, y } of this.points) {
+            this.planeWrap.appendChild(this.getPoint(type, x, y));
+        }
+    }
+
+    refreshPlaneLevel() {
     }
 
     static formatPointTitle(type) {
