@@ -31,19 +31,18 @@ class ZoomElements {
 
         const lockMapDrag = () => {
             this.mouseDown = true;
-            this.worldMap.draggable.lock = true;
+            this.worldMap.lockDrag();
         };
 
         const unlockMapDrag = () => {
             if (this.mouseDown) {
                 this.mouseDown = false;
-                this.worldMap.draggable.lock = false;
+                this.worldMap.unlockDrag();
             }
         };
 
         zoomIn.addEventListener('mousedown', lockMapDrag, false);
         zoomOut.addEventListener('mousedown', lockMapDrag, false);
-
         window.addEventListener('mouseup', unlockMapDrag, false);
 
         zoomIn.addEventListener(
@@ -55,23 +54,20 @@ class ZoomElements {
 
                 const { next } = this.worldMap.searchElements.elements;
 
+                this.lockButtons();
+
                 lockMapDrag();
                 disableButton(next);
-                disableButton(zoomOut);
-                disableButton(zoomIn);
 
                 const toLevel = this.level + 1;
 
                 this.animateZoom(toLevel, true).then(() => {
                     this.zoom(toLevel);
+                    this.unlockButtons();
 
-                    unlockMapDrag();
                     enableButton(next);
-                    enableButton(zoomOut);
+                    unlockMapDrag();
 
-                    if (this.level < 2) {
-                        enableButton(zoomIn);
-                    }
                 });
             },
             false
@@ -86,23 +82,19 @@ class ZoomElements {
 
                 const { next } = this.worldMap.searchElements.elements;
 
+                this.lockButtons();
+
                 lockMapDrag();
                 disableButton(next);
-                disableButton(zoomOut);
-                disableButton(zoomIn);
 
                 const toLevel = this.level - 1;
 
                 this.animateZoom(toLevel, false).then(() => {
                     this.zoom(toLevel);
+                    this.unlockButtons();
 
-                    unlockMapDrag();
                     enableButton(next);
-                    enableButton(zoomIn);
-
-                    if (this.level > -1) {
-                        enableButton(zoomOut);
-                    }
+                    unlockMapDrag();
                 });
             },
             false
@@ -134,8 +126,6 @@ class ZoomElements {
 
             const oldTransform = planeWrap.style.transform;
             planeWrap.style.transform = `${oldTransform} scale(${scale})`;
-
-            console.log(`${oldTransform} scale(${scale})`);
 
             setTimeout(() => {
                 planeWrap.transformOrigin = oldOrigin;
@@ -234,6 +224,21 @@ class ZoomElements {
 
         this.worldMap.scrollMap();
         this.worldMap.overviewElements.refreshSelection();
+    }
+
+    lockButtons() {
+        disableButton(this.elements.zoomIn);
+        disableButton(this.elements.zoomOut);
+    }
+
+    unlockButtons() {
+        if (this.level < 2) {
+            enableButton(this.elements.zoomIn);
+        }
+
+        if (this.level > -1) {
+            enableButton(this.elements.zoomOut);
+        }
     }
 
     init() {

@@ -126,7 +126,8 @@ class SearchElements {
             if (new RegExp(terms, 'i').test(label.replace(/\s/g, ' '))) {
                 this.lastSearchChildren.add(child);
 
-                this.worldMap.lockMap = true;
+                this.worldMap.zoomElements.lockButtons();
+                this.worldMap.lockDrag();
                 this.elements.searchInput.disabled = true;
                 this.elements.next.disabled = true;
 
@@ -151,13 +152,8 @@ class SearchElements {
                 this.worldMap.overviewElements.refreshSelection();
 
                 setTimeout(() => {
-                    if (
-                        !this.worldMap.overviewElements.open &&
-                        !this.worldMap.overviewElements.open
-                    ) {
-                        this.worldMap.lockMap = false;
-                    }
-
+                    this.worldMap.zoomElements.unlockButtons();
+                    this.worldMap.unlockDrag();
                     this.elements.searchInput.disabled = false;
                     this.elements.next.disabled = false;
                     this.worldMap.planeWrap.style.transition = '';

@@ -64,12 +64,10 @@ class KeyElements {
             () => {
                 this.open = !this.open;
 
-                if (!this.worldMap.overviewElements.open) {
-                    this.worldMap.draggable.lock = this.open;
-
-                    this.container.style.cursor = this.open
-                        ? 'inherit'
-                        : 'grab';
+                if (this.open) {
+                    this.worldMap.lockDrag();
+                } else {
+                    this.worldMap.unlockDrag();
                 }
 
                 box.style.display = this.open ? 'block' : 'none';

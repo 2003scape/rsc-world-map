@@ -126,6 +126,18 @@ class WorldMap {
         }
     }
 
+    lockDrag() {
+        this.draggable.lock = true;
+        this.container.style.cursor = 'inherit';
+    }
+
+    unlockDrag() {
+        if (!this.keyElements.open && !this.overviewElements.open) {
+            this.draggable.lock = false;
+            this.container.style.cursor = 'grab';
+        }
+    }
+
     async init() {
         await this.loadImages();
 

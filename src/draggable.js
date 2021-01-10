@@ -133,8 +133,6 @@ class Draggable {
     }
 
     scrollMap() {
-        console.log('test poop');
-
         const { width, height } = this.dragee.getBoundingClientRect();
         const maxX = -(width - this.container.clientWidth);
 

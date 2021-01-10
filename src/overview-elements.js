@@ -121,9 +121,10 @@ class OverviewElements {
     toggle() {
         this.open = !this.open;
 
-        if (!this.worldMap.keyElements.open) {
-            this.worldMap.draggable.lock = this.open;
-            this.container.style.cursor = this.open ? 'inherit' : 'grab';
+        if (this.open) {
+            this.worldMap.lockDrag();
+        } else {
+            this.worldMap.unlockDrag();
         }
 
         this.elements.box.style.display = this.open ? 'block' : 'none';
