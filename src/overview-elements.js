@@ -100,6 +100,8 @@ class OverviewElements {
 
         window.addEventListener('mouseup', () => {
             this.isMouseDown = false;
+            this.mouseX = -1;
+            this.mouseY = -1;
         });
 
         const minimap = this.worldMap.planeImage.cloneNode();
@@ -131,7 +133,9 @@ class OverviewElements {
             fontWeight: this.open ? 'bold' : 'inherit'
         });
 
-        this.refreshSelection();
+        if (this.open) {
+            this.refreshSelection();
+        }
     }
 
     refreshSelection() {
@@ -144,22 +148,20 @@ class OverviewElements {
         const minimapWidth = this.elements.minimap.clientWidth;
         const minimapHeight = this.elements.minimap.clientHeight;
 
-        const selectionWidth = minimapWidth * (containerWidth / imageWidth);
-        const selectionHeight = minimapHeight * (containerHeight / imageHeight);
+        const selectionWidth = Math.ceil(
+            minimapWidth * (containerWidth / imageWidth)
+        );
+
+        const selectionHeight = Math.ceil(
+            minimapHeight * (containerHeight / imageHeight)
+        );
 
         const offsetX =
-            Math.abs(
-                (minimapWidth * this.worldMap.draggable.mapRelativeX) /
-                    imageWidth
-            ) -
-            selectionWidth / 2;
+            minimapWidth * (-this.worldMap.draggable.mapRelativeX / imageWidth);
 
         const offsetY =
-            Math.abs(
-                (minimapHeight * this.worldMap.draggable.mapRelativeY) /
-                    imageHeight
-            ) -
-            selectionHeight / 2;
+            minimapHeight *
+            (-this.worldMap.draggable.mapRelativeY / imageHeight);
 
         Object.assign(this.elements.selection.style, {
             width: `${selectionWidth}px`,

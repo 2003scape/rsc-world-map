@@ -79,8 +79,10 @@ class ZoomElements {
             height
         } = this.worldMap.planeImage.getBoundingClientRect();
 
-        this.worldMap.planeWrap.style.width = `${width}px`;
-        this.worldMap.planeWrap.style.height = `${height}px`;
+        Object.assign(this.worldMap.planeWrap.style, {
+            width: `${width}px`,
+            height: `${height}px`
+        });
 
         // move text labels and points to match up with the new zoomed-in image:
         const translateScale = scale / this.scale;
@@ -94,7 +96,7 @@ class ZoomElements {
                 this.worldMap.container.clientWidth / translateScale;
             draggable.mapRelativeY -=
                 this.worldMap.container.clientHeight / translateScale;
-        } else {
+        } else if (zoomLevel < this.level) {
             draggable.mapRelativeX +=
                 (this.worldMap.container.clientWidth * translateScale) / 2;
 

@@ -52,8 +52,10 @@ class EntityCanvas {
     }
 
     refreshPlaneLevel() {
-        this.elements.canvas.width = this.elements.canvas.width;
-        this.addObjects();
+        if (this.worldMap.keyElements.showObjects) {
+            this.elements.canvas.width = this.elements.canvas.width;
+            this.addObjects();
+        }
     }
 
     init() {

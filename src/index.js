@@ -1,4 +1,4 @@
-const Draggable  = require('./draggable');
+const Draggable = require('./draggable');
 const EntityCanvas = require('./entity-canvas');
 const KeyElements = require('./key-elements');
 const LabelElements = require('./label-elements');
@@ -98,6 +98,8 @@ class WorldMap {
     setPlaneLevel(level) {
         this.currentPlane = level;
 
+        this.planeWrap.style.transition = '';
+
         this.planeImage.replaceWith(this.planeImages[level]);
         this.planeImage = this.planeImages[level];
 
@@ -112,6 +114,9 @@ class WorldMap {
 
         this.pointElements.refreshPlaneLevel();
         this.labelElements.refreshPlaneLevel();
+        this.keyElements.refreshPoints();
+
+        this.zoomElements.zoom(this.zoomElements.level);
 
         if (level !== 0) {
             this.container.style.backgroundColor = '#000';

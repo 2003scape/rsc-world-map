@@ -52,7 +52,9 @@ class LabelElements {
     }
 
     refreshPlaneLevel() {
-        this.addLabels();
+        if (this.worldMap.keyElements.showLabels) {
+            this.addLabels();
+        }
     }
 }
 
