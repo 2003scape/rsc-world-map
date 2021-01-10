@@ -31,7 +31,10 @@ const CONTAINER_STYLES = {
 
 const PLANE_IMAGE_STYLES = {
     transformOrigin: '0 0',
-    imageRendering: '-moz-crisp-edges',
+    // come on mozilla >: (
+    imageRendering: /firefox/i.test(navigator.userAgent)
+        ? '-moz-crisp-edges'
+        : 'pixelated',
     pointerEvents: 'none',
     userSelect: 'none'
 };

@@ -1,8 +1,6 @@
 const { getObjectImage } = require('./entity-image');
 
-const MIN_REGION_X = 48;
 const MIN_REGION_Y = 37;
-const MAX_REGION_X = 64;
 const MAX_REGION_Y = 55;
 const SECTOR_SIZE = 48;
 const TILE_SIZE = 3;
@@ -14,7 +12,9 @@ const ENTITY_CANVAS_STYLES = {
     top: 0,
     left: 0,
     transformOrigin: '0 0',
-    imageRendering: '-moz-crisp-edges'
+    imageRendering: /firefox/i.test(navigator.userAgent)
+        ? '-moz-crisp-edges'
+        : 'pixelated',
 };
 
 class EntityCanvas {

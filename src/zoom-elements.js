@@ -5,7 +5,7 @@ const { getButton, enableButton, disableButton } = require('./button-element');
 const ZOOM_IN_STYLES = { width: '32px', bottom: '16px', right: '58px' };
 const ZOOM_OUT_STYLES = { width: '32px', bottom: '16px', right: '16px' };
 
-const ZOOM_LEVELS = {
+const ZOOM_SCALES = {
     '-1': 0.5,
     0: 1,
     1: 2,
@@ -21,11 +21,30 @@ class ZoomElements {
         this.level = 0;
         this.scale = 1;
 
+        this.mouseDown = false;
+
         const zoomIn = getButton('+', 'Zoom in.');
         Object.assign(zoomIn.style, ZOOM_IN_STYLES);
 
         const zoomOut = getButton('-', 'Zoom out.');
         Object.assign(zoomOut.style, ZOOM_OUT_STYLES);
+
+        const lockMapDrag = () => {
+            this.mouseDown = true;
+            this.worldMap.draggable.lock = true;
+        };
+
+        const unlockMapDrag = () => {
+            if (this.mouseDown) {
+                this.mouseDown = false;
+                this.worldMap.draggable.lock = false;
+            }
+        };
+
+        zoomIn.addEventListener('mousedown', lockMapDrag, false);
+        zoomOut.addEventListener('mousedown', lockMapDrag, false);
+
+        window.addEventListener('mouseup', unlockMapDrag, false);
 
         zoomIn.addEventListener(
             'click',
@@ -34,12 +53,26 @@ class ZoomElements {
                     return;
                 }
 
-                this.zoom(this.level + 1);
-                enableButton(zoomOut);
+                const { next } = this.worldMap.searchElements.elements;
 
-                if (this.level >= 2) {
-                    disableButton(zoomIn);
-                }
+                lockMapDrag();
+                disableButton(next);
+                disableButton(zoomOut);
+                disableButton(zoomIn);
+
+                const toLevel = this.level + 1;
+
+                this.animateZoom(toLevel, true).then(() => {
+                    this.zoom(toLevel);
+
+                    unlockMapDrag();
+                    enableButton(next);
+                    enableButton(zoomOut);
+
+                    if (this.level < 2) {
+                        enableButton(zoomIn);
+                    }
+                });
             },
             false
         );
@@ -51,12 +84,26 @@ class ZoomElements {
                     return;
                 }
 
-                this.zoom(this.level - 1);
-                enableButton(zoomIn);
+                const { next } = this.worldMap.searchElements.elements;
 
-                if (this.level <= -1) {
-                    disableButton(zoomOut);
-                }
+                lockMapDrag();
+                disableButton(next);
+                disableButton(zoomOut);
+                disableButton(zoomIn);
+
+                const toLevel = this.level - 1;
+
+                this.animateZoom(toLevel, false).then(() => {
+                    this.zoom(toLevel);
+
+                    unlockMapDrag();
+                    enableButton(next);
+                    enableButton(zoomIn);
+
+                    if (this.level > -1) {
+                        enableButton(zoomOut);
+                    }
+                });
             },
             false
         );
@@ -64,8 +111,43 @@ class ZoomElements {
         this.elements = { zoomIn, zoomOut };
     }
 
+    animateZoom(zoomLevel, isZoomIn = true) {
+        const scale = ZOOM_SCALES[zoomLevel] / this.scale;
+
+        return new Promise((resolve) => {
+            const { planeWrap } = this.worldMap;
+
+            const offsetX =
+                -this.worldMap.draggable.mapRelativeX +
+                this.container.clientWidth / 2;
+
+            const offsetY =
+                -this.worldMap.draggable.mapRelativeY +
+                this.container.clientHeight / 2;
+
+            const oldOrigin = planeWrap.style.transformOrigin;
+            planeWrap.style.transformOrigin = `${offsetX}px ${offsetY}px`;
+
+            planeWrap.style.transition = `transform 0.3s ease-${
+                isZoomIn ? 'in' : 'out'
+            }`;
+
+            const oldTransform = planeWrap.style.transform;
+            planeWrap.style.transform = `${oldTransform} scale(${scale})`;
+
+            console.log(`${oldTransform} scale(${scale})`);
+
+            setTimeout(() => {
+                planeWrap.transformOrigin = oldOrigin;
+                planeWrap.style.transition = '';
+                planeWrap.style.transform = oldTransform;
+                resolve();
+            }, 300);
+        });
+    }
+
     zoom(zoomLevel) {
-        const scale = ZOOM_LEVELS[zoomLevel];
+        const scale = ZOOM_SCALES[zoomLevel];
         const transform = `scale(${scale})`;
 
         this.worldMap.planeWrap.style.transition = '';
@@ -94,6 +176,7 @@ class ZoomElements {
         if (zoomLevel > this.level) {
             draggable.mapRelativeX -=
                 this.worldMap.container.clientWidth / translateScale;
+
             draggable.mapRelativeY -=
                 this.worldMap.container.clientHeight / translateScale;
         } else if (zoomLevel < this.level) {
@@ -150,7 +233,6 @@ class ZoomElements {
         this.scale = scale;
 
         this.worldMap.scrollMap();
-
         this.worldMap.overviewElements.refreshSelection();
     }
 
