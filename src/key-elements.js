@@ -178,8 +178,13 @@ class KeyElements {
             checkboxEl.addEventListener(
                 'click',
                 () => {
-                    this.toggledPoints[type] = !this.toggledPoints[type];
+                    const isToggled = !this.toggledPoints[type];
+                    this.toggledPoints[type] = isToggled;
                     this.refreshPoints();
+
+                    if (isToggled) {
+                        this.worldMap.pointElements.highlight(type);
+                    }
                 },
                 false
             );
@@ -242,7 +247,7 @@ class KeyElements {
             }
         }
 
-        for (const child of this.planeWrap.children) {
+        for (const child of this.planeWrap.querySelectorAll('div')) {
             const type = child.dataset.pointType;
 
             if (type) {
@@ -256,10 +261,8 @@ class KeyElements {
     }
 
     refreshLabels() {
-        for (const child of this.planeWrap.children) {
-            if (child.tagName === 'SPAN') {
-                child.style.display = this.showLabels ? 'block' : 'none';
-            }
+        for (const child of this.planeWrap.querySelectorAll('span')) {
+            child.style.display = this.showLabels ? 'block' : 'none';
         }
     }
 

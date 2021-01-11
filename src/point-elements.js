@@ -64,6 +64,7 @@ class PointElements {
         this.worldMap = worldMap;
         this.points = this.worldMap.points;
         this.planeWrap = this.worldMap.planeWrap;
+        this.highlighted = new Set();
 
         this.elements = {};
     }
@@ -163,7 +164,51 @@ class PointElements {
         this.addPoints();
     }
 
-    isVisible(x, y) {
+    highlight(type) {
+        this.clearHighlighted();
+
+        for (const child of this.planeWrap.querySelectorAll('div')) {
+            const pointType = child.dataset.pointType;
+
+            if (pointType === type) {
+                this.highlighted.add(child);
+
+                const marginTop =
+                    Number.parseFloat(child.style.marginTop, 10) || 0;
+                const marginLeft =
+                    Number.parseFloat(child.style.marginLeft, 10) || 0;
+
+                Object.assign(child.style, {
+                    borderRadius: '14px',
+                    borderWidth: '6px',
+                    borderColor: 'yellow',
+                    backgroundColor: '#fff',
+                    marginTop: `${marginTop - 6}px`,
+                    marginLeft: `${marginLeft - 6}px`,
+                    zIndex: 1
+                });
+            }
+        }
+    }
+
+    clearHighlighted() {
+        for (const point of this.highlighted) {
+            const marginTop = Number.parseFloat(point.style.marginTop, 10) || 0;
+            const marginLeft =
+                Number.parseFloat(point.style.marginLeft, 10) || 0;
+
+            Object.assign(point.style, {
+                borderRadius: '8px',
+                borderWidth: '1px',
+                borderColor: '#000',
+                backgroundColor: POINT_WRAP_STYLES.backgroundColor,
+                marginTop: `${marginTop + 6}px`,
+                marginLeft: `${marginLeft + 6}px`,
+                zIndex: 0
+            });
+        }
+
+        this.highlighted.clear();
     }
 
     static formatPointTitle(type) {

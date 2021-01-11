@@ -26,5 +26,8 @@
   "homepage": "https://github.com/2003scape/rsc-world-map#readme",
   "dependencies": {
     "brfs": "^2.0.2"
+  },
+  "devDependencies": {
+    "tinyify": "^3.0.0"
   }
 }

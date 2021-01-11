@@ -102,6 +102,10 @@ class ZoomElements {
         this.container.addEventListener(
             'wheel',
             (event) => {
+                if (this.worldMap.keyElements.open) {
+                    return;
+                }
+
                 event.preventDefault();
 
                 if (this.locked) {
