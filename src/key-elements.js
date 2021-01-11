@@ -147,6 +147,10 @@ class KeyElements {
                 )) {
                     const toggled = !!toggleAll.checked;
 
+                    if (toggled) {
+                        this.worldMap.pointElements.clearHighlighted();
+                    }
+
                     this.toggledPoints[type] = toggled;
                     document.getElementById(`toggle-${type}`).checked = toggled;
                 }
