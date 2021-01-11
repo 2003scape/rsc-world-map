@@ -163,6 +163,9 @@ class PointElements {
         this.addPoints();
     }
 
+    isVisible(x, y) {
+    }
+
     static formatPointTitle(type) {
         return type
             .split('-')

@@ -26,12 +26,15 @@ const IMAGE_HEIGHT = 2736;
 
 const CONTAINER_STYLES = {
     color: '#fff',
-    fontFamily: 'arial, sans-serif'
+    fontFamily: 'arial, sans-serif',
+
+    // disable refresh on scroll
+    overscrollBehavior: 'contain',
+    touchAction: 'none'
 };
 
 const PLANE_IMAGE_STYLES = {
     transformOrigin: '0 0',
-    // come on mozilla >: (
     imageRendering: /firefox/i.test(navigator.userAgent)
         ? '-moz-crisp-edges'
         : 'pixelated',
@@ -51,6 +54,7 @@ class WorldMap {
         this.labels = labels || defaultLabels;
         this.points = points || defaultPoints;
         this.objects = objects || defaultObjects;
+        this.transitions = true;
 
         // height and width of the base map size
         this.imageWidth = IMAGE_WIDTH;

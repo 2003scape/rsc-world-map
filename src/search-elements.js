@@ -131,8 +131,10 @@ class SearchElements {
                 this.elements.searchInput.disabled = true;
                 this.elements.next.disabled = true;
 
-                this.worldMap.planeWrap.style.transition =
-                    'transform 0.5s ease-in';
+                if (this.worldMap.transitions) {
+                    this.worldMap.planeWrap.style.transition =
+                        'transform 0.5s ease-in';
+                }
 
                 this.worldMap.draggable.mapRelativeX =
                     this.worldMap.zoomElements.scale *

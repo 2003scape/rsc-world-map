@@ -100,7 +100,8 @@ class Draggable {
 
                 // https://easings.net/#easeOutSine
                 this.dragee.style.transition =
-                    `transform 0.${delay}s ` + 'cubic-bezier(0.61, 1, 0.88, 1)';
+                    `transform 0.${delay}s ` +
+                    'cubic-bezier(0.61, 1, 0.88, 1)';
 
                 this.transitionTimeout = setTimeout(() => {
                     this.dragee.style.transition = '';
