@@ -78,6 +78,7 @@ class PointElements {
 
             for (const [name, image] of Object.entries(POINT_IMAGES)) {
                 const imageEl = new Image();
+
                 imageEl.onerror = reject;
 
                 imageEl.onload = () => {

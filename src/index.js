@@ -39,13 +39,18 @@ const PLANE_IMAGE_STYLES = {
         ? '-moz-crisp-edges'
         : 'pixelated',
     pointerEvents: 'none',
-    userSelect: 'none'
+    userSelect: 'none',
+    position: 'absolute',
+    top: 0,
+    left: 0
 };
 
 const PLANE_WRAP_STYLES = {
     position: 'absolute',
     top: 0,
-    left: 0
+    left: 0,
+    width: '2448px',
+    height: '2736px'
 };
 
 class WorldMap {
@@ -96,6 +101,7 @@ class WorldMap {
                 )}`;
 
                 Object.assign(imageEl.style, PLANE_IMAGE_STYLES);
+                imageEl.style.position = 'absolute';
 
                 return imageEl;
             });

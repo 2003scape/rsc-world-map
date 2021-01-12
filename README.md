@@ -2,7 +2,7 @@
 interactive world map for runescape classic.
 
 features:
-* mobile and tablet support with touch controls
+* mobile and tablet support with touch controls (still WIP)
 * works with any *height x width* >= `300px x 300px`
 * four levels of zoom with crisp, pixelated landscape and anti-aliased text
 * overview box for quick navigation across ends of the map

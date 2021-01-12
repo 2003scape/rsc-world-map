@@ -1,7 +1,7 @@
 const { getButton } = require('./button-element');
 
 const INPUT_STYLES = {
-    width: 'calc(100% - 184px)',
+    width: '100px',
     boxSizing: 'border-box',
     height: '28px',
     position: 'absolute',
@@ -19,7 +19,7 @@ const INPUT_STYLES = {
 
 const NEXT_STYLES = {
     bottom: '20px',
-    right: '120px',
+    left: '125px',
     width: '32px',
     height: '28px'
 };
@@ -33,6 +33,20 @@ class SearchElements {
         // used for same labels used in different locations
         this.lastSearchChildren = new Set();
         this.lastSearchTerms = '';
+
+        this.isMouseDown = false;
+
+        const lockMapDrag = () => {
+            this.isMouseDown = true;
+            this.worldMap.lockDrag();
+        };
+
+        const unlockMapDrag = () => {
+            if (this.isMouseDown) {
+                this.isMouseDown = false;
+                this.worldMap.unlockDrag();
+            }
+        };
 
         const textLabels = Array.from(
             new Set(
@@ -51,10 +65,12 @@ class SearchElements {
         const searchInput = document.createElement('input');
 
         searchInput.type = 'search';
-        searchInput.placeholder = 'Enter a location...';
+        searchInput.placeholder = 'Location...';
 
         searchInput.setAttribute('list', labelList.id);
         Object.assign(searchInput.style, INPUT_STYLES);
+
+        searchInput.addEventListener('mousedown', lockMapDrag, false);
 
         searchInput.addEventListener(
             'focus',
@@ -87,6 +103,8 @@ class SearchElements {
         const next = getButton('Go', 'Scroll to the specified location.');
         Object.assign(next.style, NEXT_STYLES);
 
+        next.addEventListener('mousedown', lockMapDrag, false);
+
         next.addEventListener(
             'click',
             () => {
@@ -95,6 +113,8 @@ class SearchElements {
             },
             false
         );
+
+        window.addEventListener('mouseup', unlockMapDrag, false);
 
         this.elements = { labelList, searchInput, next };
     }

@@ -2,9 +2,11 @@
   "name": "@2003scape/rsc-world-map",
   "version": "1.0.0",
   "description": "interactive world map for runescape classic",
-  "main": "./src/index.js",
+  "main": "./build/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build-dev": "browserify -t brfs example.js | indexhtmlify > example.html",
+    "build": "browserify -t brfs -p tinyify ./src/index.js --standalone rsc-world-map > ./build/index.js",
+    "build-example": "browserify -t brfs -p tinyify example.js | indexhtmlify > example.html"
   },
   "repository": {
     "type": "git",
@@ -24,10 +26,9 @@
     "url": "https://github.com/2003scape/rsc-world-map/issues"
   },
   "homepage": "https://github.com/2003scape/rsc-world-map#readme",
-  "dependencies": {
-    "brfs": "^2.0.2"
-  },
   "devDependencies": {
-    "tinyify": "^3.0.0"
+    "browserify": "^17.0.0",
+    "tinyify": "^3.0.0",
+    "brfs": "^2.0.2"
   }
 }

@@ -21,8 +21,24 @@ class StairElements {
         this.worldMap = worldMap;
         this.container = this.worldMap.container;
 
+        this.isMouseDown = false;
+
+        const lockMapDrag = () => {
+            this.isMouseDown = true;
+            this.worldMap.lockDrag();
+        };
+
+        const unlockMapDrag = () => {
+            if (this.isMouseDown) {
+                this.isMouseDown = false;
+                this.worldMap.unlockDrag();
+            }
+        };
+
         const upstairs = getButton('Up', 'View the upstairs map.');
         Object.assign(upstairs.style, UPSTAIRS_STYLES);
+
+        upstairs.addEventListener('mousedown', lockMapDrag, false);
 
         upstairs.addEventListener('click', () => {
             const plane = this.worldMap.currentPlane;
@@ -43,6 +59,8 @@ class StairElements {
         const downstairs = getButton('Down', 'View the downstairs map.');
         Object.assign(downstairs.style, DOWNSTAIRS_STYLES);
 
+        downstairs.addEventListener('mousedown', lockMapDrag, false);
+
         downstairs.addEventListener('click', () => {
             const plane = this.worldMap.currentPlane;
 
@@ -57,6 +75,8 @@ class StairElements {
                 disableButton(downstairs);
             }
         });
+
+        window.addEventListener('mouseup', unlockMapDrag, false);
 
         this.elements = { upstairs, downstairs };
     }

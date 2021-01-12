@@ -9,10 +9,10 @@ const BUTTON_STYLES = {
 };
 
 const BOX_STYLES = {
-    width: '50%',
+    width: '180px',
     height: '80%',
     top: '10%',
-    left: '25%',
+    left: 'calc(50% - 90px)',
     overflowY: 'scroll',
     zIndex: 2
 };
@@ -51,13 +51,29 @@ class KeyElements {
         this.showLabels = true;
         this.showObjects = true;
 
+        this.isMouseDown = false;
+
         // { type: Boolean } e.g. { altar: true, ... }
         this.toggledPoints = {};
+
+        const lockMapDrag = () => {
+            this.isMouseDown = true;
+            this.worldMap.lockDrag();
+        };
+
+        const unlockMapDrag = () => {
+            if (!this.open && this.isMouseDown) {
+                this.isMouseDown = false;
+                this.worldMap.unlockDrag();
+            }
+        };
 
         // the "Key" button in the top right corner, used to toggle the
         // following box
         const button = getButton('Key', 'Toggle key points of interest.');
         Object.assign(button.style, BUTTON_STYLES);
+
+        button.addEventListener('mousedown', lockMapDrag, false);
 
         button.addEventListener(
             'click',
@@ -219,6 +235,8 @@ class KeyElements {
         }
 
         box.appendChild(keyList);
+
+        window.addEventListener('mouseup', unlockMapDrag, false);
 
         this.elements = { box, button, toggleAll };
     }

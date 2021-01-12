@@ -31,25 +31,25 @@ class ZoomElements {
         this.level = 0;
         this.scale = 1;
 
-        this.mouseDown = false;
+        this.isMouseDown = false;
+
+        const lockMapDrag = () => {
+            this.isMouseDown = true;
+            this.worldMap.lockDrag();
+        };
+
+        const unlockMapDrag = () => {
+            if (this.isMouseDown) {
+                this.isMouseDown = false;
+                this.worldMap.unlockDrag();
+            }
+        };
 
         const zoomIn = getButton('+', 'Zoom in.');
         Object.assign(zoomIn.style, ZOOM_IN_STYLES);
 
         const zoomOut = getButton('-', 'Zoom out.');
         Object.assign(zoomOut.style, ZOOM_OUT_STYLES);
-
-        const lockMapDrag = () => {
-            this.mouseDown = true;
-            this.worldMap.lockDrag();
-        };
-
-        const unlockMapDrag = () => {
-            if (this.mouseDown) {
-                this.mouseDown = false;
-                this.worldMap.unlockDrag();
-            }
-        };
 
         zoomIn.addEventListener('mousedown', lockMapDrag, false);
         zoomOut.addEventListener('mousedown', lockMapDrag, false);

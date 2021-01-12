@@ -52,8 +52,21 @@ class OverviewElements {
         this.mouseX = -1;
         this.mouseY = -1;
 
+        const lockMapDrag = () => {
+            this.isMouseDown = true;
+            this.worldMap.lockDrag();
+        };
+
+        const unlockMapDrag = () => {
+            if (!this.open && this.isMouseDown) {
+                this.isMouseDown = false;
+                this.worldMap.unlockDrag();
+            }
+        };
+
         const button = getButton('Overview', 'Show the minimap overview.');
         Object.assign(button.style, BUTTON_STYLES);
+        button.addEventListener('mousedown', lockMapDrag, false);
         button.addEventListener('click', () => this.toggle(), false);
 
         const box = getBox();
@@ -69,7 +82,7 @@ class OverviewElements {
         });
 
         window.addEventListener('mousemove', (event) => {
-            if (!this.isMouseDown) {
+            if (!this.open || !this.isMouseDown) {
                 return;
             }
 
@@ -98,12 +111,6 @@ class OverviewElements {
             );
         });
 
-        window.addEventListener('mouseup', () => {
-            this.isMouseDown = false;
-            this.mouseX = -1;
-            this.mouseY = -1;
-        });
-
         const minimap = this.worldMap.planeImage.cloneNode();
         Object.assign(minimap.style, MINIMAP_STYLES);
 
@@ -113,12 +120,28 @@ class OverviewElements {
         box.appendChild(minimap);
         box.appendChild(selection);
 
+        window.addEventListener('mouseup', () => {
+            if (this.isMouseDown) {
+                unlockMapDrag();
+                this.isMouseDown = false;
+                this.mouseX = -1;
+                this.mouseY = -1;
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            if (this.open) {
+                this.refreshSelection();
+            }
+        });
+
         this._scrollMap = this.scrollMap.bind(this);
 
         this.elements = { button, box, minimap, selection };
     }
 
     toggle() {
+        this.isMouseDown = false;
         this.open = !this.open;
 
         if (this.open) {
