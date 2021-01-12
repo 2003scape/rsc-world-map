@@ -23,7 +23,8 @@ const LABEL_STYLES = {
     display: 'flex',
     alignItems: 'center',
     marginBottom: '4px',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    textAlign: 'left'
 };
 
 const POINT_IMAGE_STYLES = {

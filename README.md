@@ -1,6 +1,10 @@
 # rsc-world-map
 interactive world map for runescape classic.
 
+![](./doc/screenshot.png)
+
+*[Watch a video demonstration](https://www.youtube.com/watch?v=9F10vvMgC-o)*
+
 features:
 * mobile and tablet support with touch controls (still WIP)
 * works with any *height x width* >= `300px x 300px`
